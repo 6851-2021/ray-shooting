@@ -1,7 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
+import AVLTree from "./AVLTree";
 
 function App() {
+  const tree = new AVLTree();
+  tree.insert(1);
+  tree.insert(6);
+  tree.insert(3);
+  tree.insert(5);
+  tree.insert(10);
+  tree.insert(11);
+
+  console.log(tree);
+  // printTree(tree.root);
   return (
     <div className="App">
       <header className="App-header">
