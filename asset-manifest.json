@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/ray-shooting/static/css/main.ec9ae55f.chunk.css",
+    "main.js": "/ray-shooting/static/js/main.1dca87c0.chunk.js",
+    "main.js.map": "/ray-shooting/static/js/main.1dca87c0.chunk.js.map",
+    "runtime-main.js": "/ray-shooting/static/js/runtime-main.dd1c70f6.js",
+    "runtime-main.js.map": "/ray-shooting/static/js/runtime-main.dd1c70f6.js.map",
+    "static/js/2.276ec671.chunk.js": "/ray-shooting/static/js/2.276ec671.chunk.js",
+    "static/js/2.276ec671.chunk.js.map": "/ray-shooting/static/js/2.276ec671.chunk.js.map",
+    "static/js/3.2315acae.chunk.js": "/ray-shooting/static/js/3.2315acae.chunk.js",
+    "static/js/3.2315acae.chunk.js.map": "/ray-shooting/static/js/3.2315acae.chunk.js.map",
+    "index.html": "/ray-shooting/index.html",
+    "static/css/main.ec9ae55f.chunk.css.map": "/ray-shooting/static/css/main.ec9ae55f.chunk.css.map",
+    "static/js/2.276ec671.chunk.js.LICENSE.txt": "/ray-shooting/static/js/2.276ec671.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.dd1c70f6.js",
+    "static/js/2.276ec671.chunk.js",
+    "static/css/main.ec9ae55f.chunk.css",
+    "static/js/main.1dca87c0.chunk.js"
+  ]
+}
