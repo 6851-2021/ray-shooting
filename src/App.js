@@ -44,14 +44,25 @@ const App = () => {
     }
 
     const dx = 1;
-    const sortedLines = [...lines];
     const tree = new AVLTree();
 
     // TODO: Need to make sure that x coordinates are distinct
+    const sortedLines = [...lines];
     sortedLines.sort((first, second) => {
       if (first.x1 < second.x1) {
         return -1;
       } else if (first.x1 > second.x1) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    const reverseSortedLines = [...lines];
+    reverseSortedLines.sort((first, second) => {
+      if (first.x2 < second.x2) {
+        return -1;
+      } else if (first.x2 > second.x2) {
         return 1;
       }
 
@@ -68,7 +79,7 @@ const App = () => {
         lineIdx++;
       }
 
-      if (reverseLineIdx >= 0 && sortedLines[reverseLineIdx].x2 <= i) {
+      if (reverseLineIdx >= 0 && reverseSortedLines[reverseLineIdx].x2 <= i) {
         tree.delete(reverseLineIdx);
         reverseLineIdx--;
       }
