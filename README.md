@@ -6,6 +6,10 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 In the project directory, you can run:
 
+### `npm run deploy`
+
+Deploys the app to https://6851-2021.github.io/ray-shooting/index.html.
+
 ### `yarn start`
 
 Runs the app in the development mode.\
