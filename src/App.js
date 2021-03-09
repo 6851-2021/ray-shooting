@@ -2,6 +2,7 @@ import React, { Fragment, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import AVLTree from "./AVLTree";
+import plusIcon from './img/plus.svg';
 
 const App = () => {
   const [mode, setMode] = useState(0);
@@ -20,35 +21,74 @@ const App = () => {
       } else {
         setMode(Mode.NONE);
         setFirstPoint(null);
+
+        // True if e.clientX/e.clientY describes x1
+        // x1 is the point with the smaller x coordinate
+        const newPoint = e.clientX < firstPoint.x;
+
         setLines(
           lines.concat({
-            x1: firstPoint.x,
-            y1: firstPoint.y,
-            x2: e.clientX,
-            y2: e.clientY,
+            x1: newPoint ? e.clientX : firstPoint.x,
+            y1: newPoint ? e.clientY : firstPoint.y,
+            x2: !newPoint ? e.clientX : firstPoint.x,
+            y2: !newPoint ? e.clientY : firstPoint.y,
           })
         );
       }
     }
   };
 
-  const tree = new AVLTree();
-  tree.insert(1);
-  tree.insert(6);
-  tree.insert(3);
-  tree.insert(5);
-  tree.insert(10);
-  tree.insert(11);
+  const buildTree = () => {
+    if (lines.length === 0) {
+      return;
+    }
 
-  console.log(tree);
+    const dx = 1;
+    const sortedLines = [...lines];
+    const tree = new AVLTree();
+
+    // TODO: Need to make sure that x coordinates are distinct
+    sortedLines.sort((first, second) => {
+      if (first.x1 < second.x1) {
+        return -1;
+      } else if (first.x1 > second.x1) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    // Build AVL tree
+    let lineIdx = 0;
+    let reverseLineIdx = lines.length - 1;
+
+    for (let i = 0; i < window.innerWidth; i += dx) {
+      if (lineIdx < lines.length && sortedLines[lineIdx].x1 <= i) {
+        tree.insert(lineIdx);
+        lineIdx++;
+      }
+
+      if (reverseLineIdx >= 0 && sortedLines[reverseLineIdx].x2 <= i) {
+        tree.delete(reverseLineIdx);
+        reverseLineIdx--;
+      }
+      
+      // TODO: Save the current AVL tree
+    }
+  };
+
+  buildTree();
 
   return (
     <div className="App" onClick={handleClick}>
       <div className="vertical-lines" />
       <div className="horizontal-lines" />
       <div className="button-bar">
-        <button onClick={() => setMode(Mode.CREATING_LINE_SEGMENT)}>
-          <img src="https://placehold.it/32" alt="Create line segment" />
+        <button
+          className={mode === Mode.CREATING_LINE_SEGMENT ? 'selected' : ''}
+          onClick={() => setMode(Mode.CREATING_LINE_SEGMENT)}
+        >
+          <img src={plusIcon} alt="Create line segment" />
           <p>Create line segment</p>
         </button>
       </div>

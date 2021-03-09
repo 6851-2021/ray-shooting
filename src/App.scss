@@ -43,10 +43,19 @@ $button-height: 48px;
     left: 50%;
 
     button {
-      background: none;
-      border: none;
+      background: #eee;
+      box-sizing: border-box;
+      border: 1px solid #333;
+      border-radius: 4px;
       cursor: pointer;
       outline: none;
+      padding: 8px;
+      height: $button-height;
+      width: $button-height;
+
+      &.selected {
+        background: #ccc;
+      }
 
       &:hover {
         p {
@@ -56,8 +65,8 @@ $button-height: 48px;
       }
 
       img {
-        height: $button-height;
-        width: $button-height;
+        width: 100%;
+        height: 100%;
       }
 
       p {
