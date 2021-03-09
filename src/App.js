@@ -1,6 +1,7 @@
-import React, { Fragment, useState } from 'react';
-import Mode from './mode';
-import './App.scss';
+import React, { Fragment, useState } from "react";
+import Mode from "./mode";
+import "./App.scss";
+import AVLTree from "./AVLTree";
 
 const App = () => {
   const [mode, setMode] = useState(0);
@@ -14,20 +15,32 @@ const App = () => {
       if (firstPoint === null) {
         setFirstPoint({
           x: e.clientX,
-          y: e.clientY
+          y: e.clientY,
         });
       } else {
         setMode(Mode.NONE);
         setFirstPoint(null);
-        setLines(lines.concat({
-          x1: firstPoint.x,
-          y1: firstPoint.y,
-          x2: e.clientX,
-          y2: e.clientY
-        }));
+        setLines(
+          lines.concat({
+            x1: firstPoint.x,
+            y1: firstPoint.y,
+            x2: e.clientX,
+            y2: e.clientY,
+          })
+        );
       }
     }
   };
+
+  const tree = new AVLTree();
+  tree.insert(1);
+  tree.insert(6);
+  tree.insert(3);
+  tree.insert(5);
+  tree.insert(10);
+  tree.insert(11);
+
+  console.log(tree);
 
   return (
     <div className="App" onClick={handleClick}>
@@ -47,7 +60,13 @@ const App = () => {
           <Fragment key={idx}>
             <circle cx={line.x1} cy={line.y1} r={4} />
             <circle cx={line.x2} cy={line.y2} r={4} />
-            <line key={idx} x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} />
+            <line
+              key={idx}
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
+            />
           </Fragment>
         ))}
       </svg>
