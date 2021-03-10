@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import { PersistentAVLTree } from "./PersistentAVLTree";
@@ -7,71 +7,18 @@ import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
 
 const App = () => {
-  let tree = new PersistentAVLTree();
-
   const [mode, setMode] = useState(0);
   const [firstPoint, setFirstPoint] = useState(null);
   const [lines, setLines] = useState([]);
+  const [rayLine, setRayLine] = useState(null);
+  const [tree, setTree] = useState(new PersistentAVLTree());
 
-  const handleClick = (e) => {
-    if (e.target.tagName.toLowerCase() !== "svg") return;
-
-    if (mode === Mode.CREATING_LINE_SEGMENT) {
-      if (firstPoint === null) {
-        setFirstPoint({
-          x: e.clientX,
-          y: e.clientY,
-        });
-      } else {
-        setMode(Mode.NONE);
-        setFirstPoint(null);
-
-        // True if e.clientX/e.clientY describes x1
-        // x1 is the point with the smaller x coordinate
-        const newPoint = e.clientX < firstPoint.x;
-
-        setLines(
-          lines.concat({
-            x1: newPoint ? e.clientX : firstPoint.x,
-            y1: newPoint ? e.clientY : firstPoint.y,
-            x2: !newPoint ? e.clientX : firstPoint.x,
-            y2: !newPoint ? e.clientY : firstPoint.y,
-          })
-        );
-      }
-    } else if (mode === Mode.SELECTING_LINE_SEGMENT) {
-      // console.log(tree.getVersion(e.clientX));
-      console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
-    }
-  };
-
-  const handleLineSelect = (x, y) => {
-    // console.log(tree.getVersion(x));
-    // console.log(tree.shootVerticalRay(x, y));
-  };
-
-  /*
-  operations:
-  tree.insert(el)
-  tree.delete(el)
-
-  tree.step() moves to the next version number, aka run every line of the sweep
-  run as many inserts/deletes as necessary on each step
-  */
-
-  /*
-  tree.shootVerticalRay(version, Y) returns:
-    null - if something goes wrong
-    Node object - if hits an edge
-    true - if hits top border (no successor found in graph)
-*/
-
-  const buildTree = () => {
+  useEffect(() => {
     if (lines.length === 0) {
       return;
     }
 
-    tree = new PersistentAVLTree();
+    const tree = new PersistentAVLTree();
     const dx = 1;
 
     // TODO: Need to make sure that x coordinates are distinct
@@ -114,9 +61,69 @@ const App = () => {
 
       tree.step();
     }
+
+    setTree(tree);
+  }, [lines, setTree]);
+
+  const handleClick = (e) => {
+    if (e.target.tagName.toLowerCase() !== "svg") return;
+
+    if (mode === Mode.CREATING_LINE_SEGMENT) {
+      if (firstPoint === null) {
+        setFirstPoint({
+          x: e.clientX,
+          y: e.clientY,
+        });
+      } else {
+        setMode(Mode.NONE);
+        setFirstPoint(null);
+
+        // True if e.clientX/e.clientY describes x1
+        // x1 is the point with the smaller x coordinate
+        const newPoint = e.clientX < firstPoint.x;
+
+        setLines(
+          lines.concat({
+            x1: newPoint ? e.clientX : firstPoint.x,
+            y1: newPoint ? e.clientY : firstPoint.y,
+            x2: !newPoint ? e.clientX : firstPoint.x,
+            y2: !newPoint ? e.clientY : firstPoint.y,
+          })
+        );
+      }
+    } else if (mode === Mode.SHOOTING_RAY) {
+      console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
+    }
   };
 
-  buildTree();
+  const handleMouseMove = (e) => {
+    if (mode !== Mode.SHOOTING_RAY) {
+      return;
+    }
+
+    const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
+
+    if (elem === null) {
+      setRayLine(null);
+      return;
+    }
+
+    const line = lines.find((x) => window.innerHeight - x.y1 === elem.element);
+
+    if (line === undefined) {
+      setRayLine(null);
+      return;
+    }
+
+    const topRayY = line.y1 + (line.y2 - line.y1) / (line.x2 - line.x1) * (e.clientX - line.x1);
+    
+    setRayLine({
+      x1: e.clientX,
+      y1: e.clientY,
+      x2: e.clientX,
+      y2: topRayY
+    });
+  }
 
   return (
     <div className="App" onClick={handleClick}>
@@ -131,22 +138,25 @@ const App = () => {
           <p>Create line segment</p>
         </button>
         <button
-          className={mode === Mode.SELECTING_LINE_SEGMENT ? "selected" : ""}
+          className={mode === Mode.SHOOTING_RAY ? "selected" : ""}
           onClick={() => {
             if (lines.length === 0) {
               return;
             }
 
-            setMode(Mode.SELECTING_LINE_SEGMENT)
+            setMode(mode === Mode.SHOOTING_RAY ? Mode.NONE : Mode.SHOOTING_RAY)
           }}
         >
           <img src={rayIcon} alt="Shoot vertical ray" />
           <p>Shoot vertical ray</p>
         </button>
       </div>
-      <svg width={window.innerWidth} height={window.innerHeight}>
+      <svg width={window.innerWidth} height={window.innerHeight} onMouseMove={handleMouseMove}>
         {firstPoint !== null ? (
           <circle cx={firstPoint.x} cy={firstPoint.y} r={4} />
+        ) : null}
+        {rayLine !== null ? (
+          <line {...rayLine} className="ray" />
         ) : null}
         {lines.map((line, idx) => (
           <Fragment key={idx}>
@@ -158,7 +168,6 @@ const App = () => {
               y1={line.y1}
               x2={line.x2}
               y2={line.y2}
-              onClick={(e) => handleLineSelect(e.clientX, idx)}
             />
           </Fragment>
         ))}
