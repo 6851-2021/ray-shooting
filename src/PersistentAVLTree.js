@@ -76,7 +76,7 @@ export class PersistentAVLTree {
 
   getSuccessor(element, tree) {
     const { node, path } = this._search(element, tree);
-    console.log(node, path);
+    // console.log(node, path);
     if (node === null) {
       return null;
     }
@@ -95,7 +95,7 @@ export class PersistentAVLTree {
   shootVerticalRay(version, element) {
     const versionTree = this.getVersion(version);
     if (versionTree === null) {
-      console.log("INVALID VERSION");
+      // console.log("INVALID VERSION");
       return null;
     }
     const tempTree = this._insert(element, versionTree);
@@ -106,7 +106,7 @@ export class PersistentAVLTree {
 
 // TODO: put data on the node.
 PersistentAVLTree.prototype.search = function (element) {
-  var { node, path } = this._search(element, this.current);
+  var { node } = this._search(element, this.current);
   return node ? node.element : null;
 };
 

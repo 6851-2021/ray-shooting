@@ -2,9 +2,13 @@ import React, { Fragment, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import { PersistentAVLTree } from "./PersistentAVLTree";
+
 import plusIcon from "./img/plus.svg";
+import rayIcon from "./img/ray.svg";
 
 const App = () => {
+  let tree = new PersistentAVLTree();
+
   const [mode, setMode] = useState(0);
   const [firstPoint, setFirstPoint] = useState(null);
   const [lines, setLines] = useState([]);
@@ -35,7 +39,15 @@ const App = () => {
           })
         );
       }
+    } else if (mode === Mode.SELECTING_LINE_SEGMENT) {
+      // console.log(tree.getVersion(e.clientX));
+      console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
     }
+  };
+
+  const handleLineSelect = (x, y) => {
+    // console.log(tree.getVersion(x));
+    // console.log(tree.shootVerticalRay(x, y));
   };
 
   /*
@@ -47,53 +59,20 @@ const App = () => {
   run as many inserts/deletes as necessary on each step
   */
 
-  const tree = new PersistentAVLTree();
-  tree.insert(1);
-  tree.step();
-  console.log(tree);
-  tree.insert(6);
-  tree.step();
-  console.log(tree);
-  tree.insert(3);
-  tree.step();
-  console.log(tree);
-  tree.insert(5);
-  tree.step();
-  console.log(tree);
-  tree.insert(10);
-  tree.insert(2);
-  tree.step();
-  console.log(tree);
-  tree.insert(11);
-  tree.step();
-  console.log(tree);
-  tree.delete(1);
-  tree.step();
-  tree.step();
-  tree.step();
-  tree.step();
-  tree.step();
-  tree.step();
-  console.log(tree);
-  tree.delete(10);
-  tree.step();
-  console.log(tree);
-
   /*
   tree.shootVerticalRay(version, Y) returns:
     null - if something goes wrong
     Node object - if hits an edge
     true - if hits top border (no successor found in graph)
 */
-  console.log(tree.shootVerticalRay(3, 3));
 
   const buildTree = () => {
     if (lines.length === 0) {
       return;
     }
 
+    tree = new PersistentAVLTree();
     const dx = 1;
-    const tree = new PersistentAVLTree();
 
     // TODO: Need to make sure that x coordinates are distinct
     const sortedLines = [...lines];
@@ -120,20 +99,20 @@ const App = () => {
 
     // Build AVL tree
     let lineIdx = 0;
-    let reverseLineIdx = lines.length - 1;
+    let reverseLineIdx = 0;
 
     for (let i = 0; i < window.innerWidth; i += dx) {
       if (lineIdx < lines.length && sortedLines[lineIdx].x1 <= i) {
-        tree.insert(lineIdx);
+        tree.insert(window.innerHeight - sortedLines[lineIdx].y1);
         lineIdx++;
       }
 
-      if (reverseLineIdx >= 0 && reverseSortedLines[reverseLineIdx].x2 <= i) {
-        tree.delete(reverseLineIdx);
-        reverseLineIdx--;
+      if (reverseLineIdx < lines.length && reverseSortedLines[reverseLineIdx].x2 <= i) {
+        tree.delete(window.innerHeight - reverseSortedLines[reverseLineIdx].y1);
+        reverseLineIdx++;
       }
 
-      // TODO: Save the current AVL tree
+      tree.step();
     }
   };
 
@@ -151,6 +130,19 @@ const App = () => {
           <img src={plusIcon} alt="Create line segment" />
           <p>Create line segment</p>
         </button>
+        <button
+          className={mode === Mode.SELECTING_LINE_SEGMENT ? "selected" : ""}
+          onClick={() => {
+            if (lines.length === 0) {
+              return;
+            }
+
+            setMode(Mode.SELECTING_LINE_SEGMENT)
+          }}
+        >
+          <img src={rayIcon} alt="Shoot vertical ray" />
+          <p>Shoot vertical ray</p>
+        </button>
       </div>
       <svg width={window.innerWidth} height={window.innerHeight}>
         {firstPoint !== null ? (
@@ -166,6 +158,7 @@ const App = () => {
               y1={line.y1}
               x2={line.x2}
               y2={line.y2}
+              onClick={(e) => handleLineSelect(e.clientX, idx)}
             />
           </Fragment>
         ))}

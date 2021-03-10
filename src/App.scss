@@ -49,8 +49,10 @@ $button-height: 48px;
       border: 1px solid #333;
       border-radius: 4px;
       cursor: pointer;
+      margin: 0 8px;
       outline: none;
       padding: 8px;
+      position: relative;
       height: $button-height;
       width: $button-height;
 
@@ -79,6 +81,7 @@ $button-height: 48px;
         transition: 0.3s ease all;
         transform: translateX(-50%);
         left: 50%;
+        text-align: center;
       }
     }
   }
