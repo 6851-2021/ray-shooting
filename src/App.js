@@ -1,7 +1,8 @@
 import React, { Fragment, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
-import AVLTree from "./AVLTree";
+import { AVLTree } from "./AVLTree";
+import { PersistentAVLTree } from "./PersistentAVLTree";
 
 const App = () => {
   const [mode, setMode] = useState(0);
@@ -32,15 +33,45 @@ const App = () => {
     }
   };
 
-  const tree = new AVLTree();
+  const tree = new PersistentAVLTree();
   tree.insert(1);
-  tree.insert(6);
-  tree.insert(3);
-  tree.insert(5);
-  tree.insert(10);
-  tree.insert(11);
-
+  tree.step();
   console.log(tree);
+  tree.insert(6);
+  tree.step();
+  console.log(tree);
+  tree.insert(3);
+  tree.step();
+  console.log(tree);
+  tree.insert(5);
+  tree.step();
+  console.log(tree);
+  tree.insert(10);
+  tree.step();
+  console.log(tree);
+
+  tree.insert(11);
+  tree.step();
+  console.log(tree);
+  tree.delete(1);
+  tree.step();
+  tree.step();
+  tree.step();
+  tree.step();
+  tree.step();
+  tree.step();
+  console.log(tree);
+  tree.delete(10);
+  tree.step();
+  console.log(tree);
+
+  /*
+  tree.shootVerticalRay(version, Y) returns:
+    null - if something goes wrong
+    Node object - if hits an edge
+    true - if hits top border (no successor found in graph)
+*/
+  console.log(tree.shootVerticalRay(3, 3));
 
   return (
     <div className="App" onClick={handleClick}>
