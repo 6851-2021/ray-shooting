@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import { PersistentAVLTree } from "./PersistentAVLTree";
@@ -10,8 +10,9 @@ const App = () => {
   const [mode, setMode] = useState(0);
   const [firstPoint, setFirstPoint] = useState(null);
   const [lines, setLines] = useState([]);
-  const [rayLine, setRayLine] = useState(null);
   const [tree, setTree] = useState(new PersistentAVLTree());
+
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     if (lines.length === 0) {
@@ -65,6 +66,28 @@ const App = () => {
     setTree(tree);
   }, [lines, setTree]);
 
+  const createLineElement = (line, id = null) => {
+    const elem = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    elem.setAttribute("x1", line.x1);
+    elem.setAttribute("y1", line.y1);
+    elem.setAttribute("x2", line.x2);
+    elem.setAttribute("y2", line.y2);
+
+    if (id !== null) {
+      elem.setAttribute("id", id);
+    }
+
+    return elem;
+  };
+
+  const createCircleElement = (x, y, r = 4) => {
+    const elem = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    elem.setAttribute("cx", x);
+    elem.setAttribute("cy", y);
+    elem.setAttribute("r", r);
+    return elem;
+  };
+
   const handleClick = (e) => {
     if (e.target.tagName.toLowerCase() !== "svg") return;
 
@@ -74,6 +97,8 @@ const App = () => {
           x: e.clientX,
           y: e.clientY,
         });
+
+        canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
       } else {
         setMode(Mode.NONE);
         setFirstPoint(null);
@@ -82,14 +107,17 @@ const App = () => {
         // x1 is the point with the smaller x coordinate
         const newPoint = e.clientX < firstPoint.x;
 
-        setLines(
-          lines.concat({
-            x1: newPoint ? e.clientX : firstPoint.x,
-            y1: newPoint ? e.clientY : firstPoint.y,
-            x2: !newPoint ? e.clientX : firstPoint.x,
-            y2: !newPoint ? e.clientY : firstPoint.y,
-          })
-        );
+        const line = {
+          x1: newPoint ? e.clientX : firstPoint.x,
+          y1: newPoint ? e.clientY : firstPoint.y,
+          x2: !newPoint ? e.clientX : firstPoint.x,
+          y2: !newPoint ? e.clientY : firstPoint.y,
+        };
+
+        setLines(lines.concat(line));
+
+        canvasRef.current.appendChild(createLineElement(line));
+        canvasRef.current.appendChild(createCircleElement(line.x2, line.y2));
       }
     } else if (mode === Mode.SHOOTING_RAY) {
       console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
@@ -101,29 +129,31 @@ const App = () => {
       return;
     }
 
+    if (document.getElementById("ray") !== null) {
+      document.getElementById("ray").remove();
+    }
+
     const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
 
     if (elem === null) {
-      setRayLine(null);
       return;
     }
 
     const line = lines.find((x) => window.innerHeight - x.y1 === elem.element);
 
     if (line === undefined) {
-      setRayLine(null);
       return;
     }
 
     const topRayY = line.y1 + (line.y2 - line.y1) / (line.x2 - line.x1) * (e.clientX - line.x1);
-    
-    setRayLine({
+
+    canvasRef.current.appendChild(createLineElement({
       x1: e.clientX,
       y1: e.clientY,
       x2: e.clientX,
       y2: topRayY
-    });
-  }
+    }, "ray"));
+  };
 
   return (
     <div className="App" onClick={handleClick}>
@@ -151,27 +181,7 @@ const App = () => {
           <p>Shoot vertical ray</p>
         </button>
       </div>
-      <svg width={window.innerWidth} height={window.innerHeight} onMouseMove={handleMouseMove}>
-        {firstPoint !== null ? (
-          <circle cx={firstPoint.x} cy={firstPoint.y} r={4} />
-        ) : null}
-        {rayLine !== null ? (
-          <line {...rayLine} className="ray" />
-        ) : null}
-        {lines.map((line, idx) => (
-          <Fragment key={idx}>
-            <circle cx={line.x1} cy={line.y1} r={4} />
-            <circle cx={line.x2} cy={line.y2} r={4} />
-            <line
-              key={idx}
-              x1={line.x1}
-              y1={line.y1}
-              x2={line.x2}
-              y2={line.y2}
-            />
-          </Fragment>
-        ))}
-      </svg>
+      <svg ref={canvasRef} width={window.innerWidth} height={window.innerHeight} onMouseMove={handleMouseMove} />
     </div>
   );
 };
