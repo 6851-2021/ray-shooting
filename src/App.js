@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import { PersistentAVLTree } from "./PersistentAVLTree";
@@ -14,7 +14,7 @@ const App = () => {
 
   const canvasRef = useRef(null);
 
-  useEffect(() => {
+  const buildTree = useCallback(() => {
     if (lines.length === 0) {
       return;
     }
@@ -63,8 +63,8 @@ const App = () => {
       tree.step();
     }
 
-    setTree(tree);
-  }, [lines, setTree]);
+    return tree;
+  }, [lines]);
 
   const createLineElement = (line, id = null) => {
     const elem = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -100,7 +100,6 @@ const App = () => {
 
         canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
       } else {
-        setMode(Mode.SHOOTING_RAY);
         setFirstPoint(null);
 
         // True if e.clientX/e.clientY describes x1
@@ -174,7 +173,8 @@ const App = () => {
               return;
             }
 
-            setMode(Mode.SHOOTING_RAY)
+            setTree(buildTree());
+            setMode(Mode.SHOOTING_RAY);
           }}
         >
           <img src={rayIcon} alt="Shoot vertical ray" />
