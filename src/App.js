@@ -7,7 +7,7 @@ import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
 
 const App = () => {
-  const [mode, setMode] = useState(0);
+  const [mode, setMode] = useState(Mode.CREATING_LINE_SEGMENT);
   const [firstPoint, setFirstPoint] = useState(null);
   const [lines, setLines] = useState([]);
   const [tree, setTree] = useState(new PersistentAVLTree());
@@ -100,7 +100,7 @@ const App = () => {
 
         canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
       } else {
-        setMode(Mode.NONE);
+        setMode(Mode.SHOOTING_RAY);
         setFirstPoint(null);
 
         // True if e.clientX/e.clientY describes x1
@@ -174,7 +174,7 @@ const App = () => {
               return;
             }
 
-            setMode(mode === Mode.SHOOTING_RAY ? Mode.NONE : Mode.SHOOTING_RAY)
+            setMode(Mode.SHOOTING_RAY)
           }}
         >
           <img src={rayIcon} alt="Shoot vertical ray" />
