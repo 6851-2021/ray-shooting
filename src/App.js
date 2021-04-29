@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
-import { PersistentAVLTree } from "./PersistentAVLTree";
+import { PersistentAVLTree, Line } from "./PersistentAVLTree";
 
 import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
@@ -51,12 +51,21 @@ const App = () => {
 
     for (let i = 0; i < window.innerWidth; i += dx) {
       if (lineIdx < lines.length && sortedLines[lineIdx].x1 <= i) {
-        tree.insert(window.innerHeight - sortedLines[lineIdx].y1);
+        const { x1, y1, x2, y2 } = sortedLines[lineIdx];
+        tree.insert(
+          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
+        );
         lineIdx++;
       }
 
-      if (reverseLineIdx < lines.length && reverseSortedLines[reverseLineIdx].x2 <= i) {
-        tree.delete(window.innerHeight - reverseSortedLines[reverseLineIdx].y1);
+      if (
+        reverseLineIdx < lines.length &&
+        reverseSortedLines[reverseLineIdx].x2 <= i
+      ) {
+        const { x1, y1, x2, y2 } = reverseSortedLines[reverseLineIdx];
+        tree.delete(
+          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
+        );
         reverseLineIdx++;
       }
 
@@ -116,10 +125,13 @@ const App = () => {
         setLines(lines.concat(line));
 
         canvasRef.current.appendChild(createLineElement(line));
-        canvasRef.current.appendChild(createCircleElement(line.x2, line.y2));
+        canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
       }
     } else if (mode === Mode.SHOOTING_RAY) {
-      console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
+      console.log(
+        "btuhh"
+        // tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY)
+      );
     }
   };
 
@@ -134,23 +146,18 @@ const App = () => {
 
     const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
 
-    if (elem === null) {
+    if (elem === null || elem.element === undefined) {
       return;
     }
 
-    const line = lines.find((x) => window.innerHeight - x.y1 === elem.element);
-
-    if (line === undefined) {
-      return;
-    }
-
-    const topRayY = line.y1 + (line.y2 - line.y1) / (line.x2 - line.x1) * (e.clientX - line.x1);
+    const {startX, startY, endX, endY} = elem.element;
+    const topRayY = startY + (endY - startY) / (endX - startX) * (e.clientX - startX);
 
     canvasRef.current.appendChild(createLineElement({
       x1: e.clientX,
       y1: e.clientY,
       x2: e.clientX,
-      y2: topRayY
+      y2: window.innerHeight - topRayY
     }, "ray"));
   };
 
