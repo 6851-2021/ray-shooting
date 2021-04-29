@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
-import { PersistentAVLTree } from "./PersistentAVLTree";
+import { PersistentAVLTree, Line } from "./PersistentAVLTree";
 
 import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
@@ -50,12 +50,21 @@ const App = () => {
 
     for (let i = 0; i < window.innerWidth; i += dx) {
       if (lineIdx < lines.length && sortedLines[lineIdx].x1 <= i) {
-        tree.insert(window.innerHeight - sortedLines[lineIdx].y1);
+        const { x1, y1, x2, y2 } = sortedLines[lineIdx];
+        tree.insert(
+          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
+        );
         lineIdx++;
       }
 
-      if (reverseLineIdx < lines.length && reverseSortedLines[reverseLineIdx].x2 <= i) {
-        tree.delete(window.innerHeight - reverseSortedLines[reverseLineIdx].y1);
+      if (
+        reverseLineIdx < lines.length &&
+        reverseSortedLines[reverseLineIdx].x2 <= i
+      ) {
+        const { x1, y1, x2, y2 } = reverseSortedLines[reverseLineIdx];
+        tree.delete(
+          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
+        );
         reverseLineIdx++;
       }
 
@@ -92,7 +101,10 @@ const App = () => {
         );
       }
     } else if (mode === Mode.SHOOTING_RAY) {
-      console.log(tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY));
+      console.log(
+        "btuhh"
+        // tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY)
+      );
     }
   };
 
@@ -101,29 +113,39 @@ const App = () => {
       return;
     }
 
-    const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
+    // console.log(tree.getVersion(e.clientX));
+    // return;
 
-    if (elem === null) {
+    const elem = tree.shootVerticalRay(
+      e.clientX,
+      window.innerHeight - e.clientY
+    );
+
+    if (elem === null || elem.element === undefined) {
       setRayLine(null);
       return;
     }
 
-    const line = lines.find((x) => window.innerHeight - x.y1 === elem.element);
+    const line = lines.find(
+      (x) => window.innerHeight - x.y1 === elem.element.startY
+    );
 
     if (line === undefined) {
       setRayLine(null);
       return;
     }
 
-    const topRayY = line.y1 + (line.y2 - line.y1) / (line.x2 - line.x1) * (e.clientX - line.x1);
-    
+    const topRayY =
+      line.y1 +
+      ((line.y2 - line.y1) / (line.x2 - line.x1)) * (e.clientX - line.x1);
+
     setRayLine({
       x1: e.clientX,
       y1: e.clientY,
       x2: e.clientX,
-      y2: topRayY
+      y2: topRayY,
     });
-  }
+  };
 
   return (
     <div className="App" onClick={handleClick}>
@@ -144,20 +166,22 @@ const App = () => {
               return;
             }
 
-            setMode(mode === Mode.SHOOTING_RAY ? Mode.NONE : Mode.SHOOTING_RAY)
+            setMode(mode === Mode.SHOOTING_RAY ? Mode.NONE : Mode.SHOOTING_RAY);
           }}
         >
           <img src={rayIcon} alt="Shoot vertical ray" />
           <p>Shoot vertical ray</p>
         </button>
       </div>
-      <svg width={window.innerWidth} height={window.innerHeight} onMouseMove={handleMouseMove}>
+      <svg
+        width={window.innerWidth}
+        height={window.innerHeight}
+        onMouseMove={handleMouseMove}
+      >
         {firstPoint !== null ? (
           <circle cx={firstPoint.x} cy={firstPoint.y} r={4} />
         ) : null}
-        {rayLine !== null ? (
-          <line {...rayLine} className="ray" />
-        ) : null}
+        {rayLine !== null ? <line {...rayLine} className="ray" /> : null}
         {lines.map((line, idx) => (
           <Fragment key={idx}>
             <circle cx={line.x1} cy={line.y1} r={4} />

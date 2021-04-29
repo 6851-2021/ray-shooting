@@ -13,6 +13,20 @@ function getBalance(node) {
   return getHeight(node.right) - getHeight(node.left);
 }
 
+export class Line {
+  startX;
+  startY;
+  endX;
+  endY;
+
+  constructor(startX, startY, endX, endY) {
+    this.startX = startX;
+    this.startY = startY;
+    this.endX = endX;
+    this.endY = endY;
+  }
+}
+
 function Node(element) {
   this.element = element;
   this.height = 1;
@@ -21,13 +35,30 @@ function Node(element) {
   this.id = Math.random();
 }
 
-function sortLeftToRight(a, b) {
-  if (a < b) {
-    return -1;
-  } else if (a > b) {
-    return 1;
+// function sortLeftToRight(a, b) {
+//   if (ptX < startX || ptX > endX) {
+//     throw "Point not in range of line!";
+//   }
+//   const slope = (endY - startY) / (endX - endY);
+//   const currY = startY + slope * (ptX - startX);
+//   return currY < ptY ? -1 : 1;
+
+//   if (a.startY < b.startY) {
+//     return -1;
+//   } else if (a.startY > b.startY) {
+//     return 1;
+//   }
+//   return 0;
+// }
+
+function compPointToLine(ptX, ptY, line) {
+  const { startX, startY, endX, endY } = line;
+  if (ptX < startX || ptX > endX) {
+    throw "Point not in range of line!";
   }
-  return 0;
+  const slope = (endY - startY) / (endX - endY);
+  const currY = startY + slope * (ptX - startX);
+  return currY < ptY ? -1 : 1;
 }
 
 function updateHeight(node) {
@@ -60,14 +91,53 @@ export class PersistentAVLTree {
     if (typeof comparisonFunc === "function") {
       this._compare = comparisonFunc;
     } else {
-      this._compare = sortLeftToRight;
+      this._compare = this.sortLeftToRight;
     }
     this.current = null;
     this.versions = [];
+    this.currVersionNum = 0;
+  }
+
+  // make a different compare functino for comparing points
+  sortLeftToRight(a, b) {
+    let x;
+    if (a.endX === undefined && a.endY === undefined) {
+      x = a.startX;
+    } else {
+      if (
+        this.currVersionNum < a.startX ||
+        this.currVersionNum > a.endX ||
+        this.currVersionNum < b.startX ||
+        this.currVersionNum > b.endX
+      ) {
+        console.log("OUT OF RANGE FUCK", this.currVersionNum, a, b);
+        // console.log("OUT OF RANGE FUCK");
+        throw "Point not in range of line!";
+      }
+      x = this.currVersionNum;
+    }
+
+    const aCurrY =
+      a.endX === undefined && a.endY === undefined
+        ? a.startY
+        : a.startY +
+          ((a.endY - a.startY) / (a.endX - a.startX)) * (x - a.startX);
+    const bCurrY =
+      b.startY + ((b.endY - b.startY) / (b.endX - b.startX)) * (x - b.startX);
+
+    // console.log(x, aCurrY, bCurrY);
+    if (aCurrY < bCurrY) {
+      return -1;
+    } else if (aCurrY > bCurrY) {
+      return 1;
+    }
+    return 0;
   }
 
   step() {
     this.versions.push(this.current);
+    this.currVersionNum += 1;
+    // console.log(this.current);
   }
 
   getVersion(version) {
@@ -93,13 +163,17 @@ export class PersistentAVLTree {
   }
 
   shootVerticalRay(version, element) {
+    element = new Line(version, element);
+    console.log("element:", element);
     const versionTree = this.getVersion(version);
     if (versionTree === null) {
       // console.log("INVALID VERSION");
       return null;
     }
     const tempTree = this._insert(element, versionTree);
+    // console.log(versionTree, element, tempTree);
     const successor = this.getSuccessor(element, tempTree);
+    // console.log("SUCCESSOR: ", successor);
     return successor !== null ? successor : true;
   }
 }
@@ -114,6 +188,7 @@ PersistentAVLTree.prototype._search = function (element, node, path = []) {
   if (node === null) {
     return { node, path };
   }
+
   path.push(node);
   var direction = this._compare(element, node.element);
   if (direction < 0) {
@@ -125,11 +200,18 @@ PersistentAVLTree.prototype._search = function (element, node, path = []) {
 };
 
 PersistentAVLTree.prototype.insert = function (element) {
-  //console.log("inserting ", element);
+  console.log("inserting ", element);
+  console.log("before", this.current);
   this.current = this._insert(element, this.current);
+  console.log("after", this.current);
 };
 
 PersistentAVLTree.prototype._insert = function (element, node) {
+  // if (!(element instanceof Line)) {
+  //   console.log("not line:", element);
+  //   element = new Line(element);
+  // }
+
   if (node === null) {
     const newNode = new Node(element);
     return newNode;
@@ -138,6 +220,7 @@ PersistentAVLTree.prototype._insert = function (element, node) {
 
   // just copy here, propagate to children
   var direction = this._compare(element, node.element);
+  console.log("comapare", element, node.element, direction);
   if (direction < 0) {
     node.left = this._insert(element, node.left);
   } else if (direction > 0) {
@@ -168,6 +251,7 @@ PersistentAVLTree.prototype._insert = function (element, node) {
 };
 
 PersistentAVLTree.prototype._rightRotate = function (node) {
+  console.log("RIGHT ROTATE");
   var l = node.left;
   var lr = l.right;
   l.right = node;
@@ -178,6 +262,7 @@ PersistentAVLTree.prototype._rightRotate = function (node) {
 };
 
 PersistentAVLTree.prototype._leftRotate = function (node) {
+  console.log("LEFT ROTATE");
   var r = node.right;
   var rl = r.left;
   r.left = node;
@@ -188,19 +273,20 @@ PersistentAVLTree.prototype._leftRotate = function (node) {
 };
 
 PersistentAVLTree.prototype.delete = function (element) {
-  //console.log("deleting ", element, this.current);
+  console.log("deleting ", element, this.current);
   if (this.current !== null) {
     this.current = this._delete(element, this.current, null);
   }
 };
 
 PersistentAVLTree.prototype._delete = function (element, node, parent) {
-  //console.log("DELETE: ", element, node, parent);
+  console.log("DELETE: ", element, node, parent);
   if (node === null) {
     return null;
   }
   const oldNode = node;
   node = copyNode(node);
+  console.log("copyNode: ", node);
   var direction = this._compare(element, node.element);
   if (direction < 0) {
     // go left
@@ -261,7 +347,7 @@ PersistentAVLTree.prototype._delete = function (element, node, parent) {
 
     node.left = null;
   }
-
+  console.log("_balance", node, parent);
   return this._balance(node, parent); // backtrack and balance everyone
 };
 
