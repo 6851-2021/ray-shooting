@@ -383,13 +383,13 @@ PersistentAVLTree.prototype.getMax = function (node) {
 };
 
 PersistentAVLTree.prototype._balance = function (node, parent) {
-  // node = copySubtree(node);
+  node = copySubtree(node);
   updateHeight(node);
   var balance = getBalance(node);
   var newRoot, x, y, z;
   if (balance < -1) {
     node = copySubtree(node);
-    //console.log("balance < -1");
+    console.log("balance < -1");
     z = node;
     y = node.left;
     x = this._getTallestSubtree(y);
@@ -404,7 +404,7 @@ PersistentAVLTree.prototype._balance = function (node, parent) {
     return newRoot;
   } else if (balance > 1) {
     node = copySubtree(node);
-    //console.log("balance > 1");
+    console.log("balance > 1");
     z = node;
     y = node.right;
     x = this._getTallestSubtree(y);
@@ -418,7 +418,7 @@ PersistentAVLTree.prototype._balance = function (node, parent) {
     updateHeight(y);
     return newRoot;
   } else {
-    //console.log("no balance needed");
+    console.log("no balance needed");
   }
   updateHeight(node);
   return node;
