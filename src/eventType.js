@@ -1,7 +1,7 @@
 const eventType = {
-  START: 1,
-  END: 2,
-  CROSS: 3
+  START: 'start',
+  END: 'end',
+  CROSS: 'cross'
 };
 
 export default eventType;

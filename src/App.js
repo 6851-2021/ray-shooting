@@ -26,16 +26,16 @@ const App = () => {
 
     const queue = new PriorityQueue();
 
-    lines.forEach((line, idx) => {
+    lines.forEach((line) => {
       queue.insert({
         eventType: EventType.START,
-        lineIdx: idx,
+        line,
         val: line.x1
       });
 
       queue.insert({
         eventType: EventType.END,
-        lineIdx: idx,
+        line,
         val: line.x2
       });
     });
@@ -50,17 +50,36 @@ const App = () => {
       console.log(evt);
 
       if (evt.eventType === EventType.START) {
-        const { x1, y1, x2, y2 } = lines[evt.lineIdx];
+        let { x1, y1, x2, y2 } = evt.line;
+        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
 
-        tree.insert(
-          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
-        );
+        const tempTree = tree.insert(line);
+        const successor = tree.getSuccessor(line, tempTree);
+
+        if (successor !== null) {
+          y1 = window.innerHeight - y1;
+          y2 = window.innerHeight - y2;
+
+          const x3 = successor.element.startX;
+          const y3 = successor.element.startY;
+          const x4 = successor.element.endX;
+          const y4 = successor.element.endY;
+
+          const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+          queue.insert({
+            eventType: EventType.CROSS,
+            line: successor,
+            val: Math.ceil(intersectionX)
+          });
+        }
       } else if (evt.eventType === EventType.END) {
-        const { x1, y1, x2, y2 } = lines[evt.lineIdx];
-
-        tree.delete(
-          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
-        );
+        const { x1, y1, x2, y2 } = evt.line;
+        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        tree.delete(line);
+      } else if (evt.eventType === EventType.CROSS) {
+        console.log("cross happens");
       }
 
       tree.step();
