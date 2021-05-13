@@ -147,7 +147,7 @@ export class PersistentAVLTree {
   getSuccessor(element, tree) {
     const { node, path } = this._search(element, tree);
     // console.log(node, path);
-    if (node === null) {
+    if (node === null || node === undefined) {
       return null;
     }
     if (node.right) {
@@ -170,6 +170,7 @@ export class PersistentAVLTree {
       // console.log("INVALID VERSION");
       return null;
     }
+    console.log(versionTree);
     const tempTree = this._insert(element, versionTree);
     // console.log(versionTree, element, tempTree);
     const successor = this.getSuccessor(element, tempTree);
@@ -185,7 +186,7 @@ PersistentAVLTree.prototype.search = function (element) {
 };
 
 PersistentAVLTree.prototype._search = function (element, node, path = []) {
-  if (node === null) {
+  if (node === null || node === undefined) {
     return { node, path };
   }
 
@@ -211,7 +212,7 @@ PersistentAVLTree.prototype._insert = function (element, node) {
   //   console.log("not line:", element);
   //   element = new Line(element);
   // }
-  console.log("Inserting: ", this.currVersionNum, element);
+  // console.log("Inserting: ", this.currVersionNum, element);
   if (node === null) {
     const newNode = new Node(element);
     return newNode;
@@ -251,7 +252,7 @@ PersistentAVLTree.prototype._insert = function (element, node) {
 };
 
 PersistentAVLTree.prototype._rightRotate = function (node) {
-  console.log("RIGHT ROTATE");
+  // console.log("RIGHT ROTATE");
   var l = node.left;
   var lr = l.right;
   l.right = node;
@@ -262,7 +263,7 @@ PersistentAVLTree.prototype._rightRotate = function (node) {
 };
 
 PersistentAVLTree.prototype._leftRotate = function (node) {
-  console.log("LEFT ROTATE");
+  // console.log("LEFT ROTATE");
   var r = node.right;
   var rl = r.left;
   r.left = node;
