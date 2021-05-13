@@ -2,9 +2,11 @@ import React, { useCallback, useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
 import { PersistentAVLTree, Line } from "./PersistentAVLTree";
+import EventType from "./eventType";
 
 import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
+import PriorityQueue from "./priorityQueue";
 
 const App = () => {
   const [mode, setMode] = useState(Mode.CREATING_LINE_SEGMENT);
@@ -22,51 +24,62 @@ const App = () => {
     const tree = new PersistentAVLTree();
     const dx = 1;
 
-    // TODO: Need to make sure that x coordinates are distinct
-    const sortedLines = [...lines];
-    sortedLines.sort((first, second) => {
-      if (first.x1 < second.x1) {
-        return -1;
-      } else if (first.x1 > second.x1) {
-        return 1;
-      }
+    const queue = new PriorityQueue();
 
-      return 0;
+    lines.forEach((line) => {
+      queue.insert({
+        eventType: EventType.START,
+        line,
+        val: line.x1
+      });
+
+      queue.insert({
+        eventType: EventType.END,
+        line,
+        val: line.x2
+      });
     });
-
-    const reverseSortedLines = [...lines];
-    reverseSortedLines.sort((first, second) => {
-      if (first.x2 < second.x2) {
-        return -1;
-      } else if (first.x2 > second.x2) {
-        return 1;
-      }
-
-      return 0;
-    });
-
-    // Build AVL tree
-    let lineIdx = 0;
-    let reverseLineIdx = 0;
 
     for (let i = 0; i < window.innerWidth; i += dx) {
-      if (lineIdx < lines.length && sortedLines[lineIdx].x1 <= i) {
-        const { x1, y1, x2, y2 } = sortedLines[lineIdx];
-        tree.insert(
-          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
-        );
-        lineIdx++;
+      if (queue.peek() === undefined || queue.peek().val !== i) {
+        tree.step();
+        continue;
       }
 
-      if (
-        reverseLineIdx < lines.length &&
-        reverseSortedLines[reverseLineIdx].x2 <= i
-      ) {
-        const { x1, y1, x2, y2 } = reverseSortedLines[reverseLineIdx];
-        tree.delete(
-          new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2)
-        );
-        reverseLineIdx++;
+      const evt = queue.extractMin();
+      console.log(evt);
+
+      if (evt.eventType === EventType.START) {
+        let { x1, y1, x2, y2 } = evt.line;
+        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+
+        const tempTree = tree.insert(line);
+        const successor = tree.getSuccessor(line, tempTree);
+
+        if (successor !== null) {
+          y1 = window.innerHeight - y1;
+          y2 = window.innerHeight - y2;
+
+          const x3 = successor.element.startX;
+          const y3 = successor.element.startY;
+          const x4 = successor.element.endX;
+          const y4 = successor.element.endY;
+
+          const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+          queue.insert({
+            eventType: EventType.CROSS,
+            line: successor,
+            val: Math.ceil(intersectionX)
+          });
+        }
+      } else if (evt.eventType === EventType.END) {
+        const { x1, y1, x2, y2 } = evt.line;
+        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        tree.delete(line);
+      } else if (evt.eventType === EventType.CROSS) {
+        console.log("cross happens");
       }
 
       tree.step();
