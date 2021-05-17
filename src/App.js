@@ -41,7 +41,7 @@ const App = () => {
     });
 
     for (let i = 0; i < window.innerWidth; i += dx) {
-      if (queue.peek() === undefined || queue.peek().val !== i) {
+      if (queue.peek() === undefined || queue.peek().val > i) {
         tree.step();
         continue;
       }
@@ -66,19 +66,26 @@ const App = () => {
           const y4 = successor.element.endY;
 
           const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          console.log(((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)))
+          console.log(intersectionX);
           // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 
-          queue.insert({
-            eventType: EventType.CROSS,
-            line: successor,
-            val: Math.ceil(intersectionX)
-          });
+          // queue.insert({
+          //   eventType: EventType.CROSS,
+          //   line: line,
+          //   val: Math.ceil(intersectionX)
+          // });
         }
       } else if (evt.eventType === EventType.END) {
         const { x1, y1, x2, y2 } = evt.line;
         const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
         tree.delete(line);
       } else if (evt.eventType === EventType.CROSS) {
+        // const { x1, y1, x2, y2 } = evt.line;
+        // const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        // tree.delete(line);
+        console.log(evt.line);
+        tree.delete(evt.line);
         console.log("cross happens");
       }
 

@@ -205,6 +205,7 @@ PersistentAVLTree.prototype.insert = function (element) {
   console.log("before", this.currVersionNum, this.current);
   this.current = this._insert(element, this.current);
   console.log("after", this.currVersionNum, this.current);
+  return this.current;
 };
 
 PersistentAVLTree.prototype._insert = function (element, node) {
