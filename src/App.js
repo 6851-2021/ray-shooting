@@ -65,16 +65,19 @@ const App = () => {
           const x4 = successor.element.endX;
           const y4 = successor.element.endY;
 
-          const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
-          console.log(((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)))
-          console.log(intersectionX);
-          // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          // Checks if q is on line segment pr
+          const onSegment = (p, q, r) => q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
 
-          // queue.insert({
-          //   eventType: EventType.CROSS,
-          //   line: line,
-          //   val: Math.ceil(intersectionX)
-          // });
+          const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+          if (onSegment({x: x1, y: y1}, {x: intersectionX, y: intersectionY}, {x: x2, y: y2}) && onSegment({x: x3, y: y3}, {x: intersectionX, y: intersectionY}, {x: x4, y: y4})) {
+            queue.insert({
+              eventType: EventType.CROSS,
+              line: line,
+              val: Math.ceil(intersectionX)
+            });
+          }
         }
       } else if (evt.eventType === EventType.END) {
         const { x1, y1, x2, y2 } = evt.line;
