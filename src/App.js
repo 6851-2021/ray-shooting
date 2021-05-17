@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
-import { PersistentAVLTree, Line } from "./PersistentAVLTree";
+import { PersistentAVLTree, Line, copySubtree } from "./PersistentAVLTree";
 import EventType from "./eventType";
 
 import plusIcon from "./img/plus.svg";
@@ -75,7 +75,9 @@ const App = () => {
             queue.insert({
               eventType: EventType.CROSS,
               line: line,
-              val: Math.ceil(intersectionX)
+              intX: intersectionX,
+              intY: intersectionY,
+              val: intersectionX - 1
             });
           }
         }
@@ -84,12 +86,28 @@ const App = () => {
         const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
         tree.delete(line);
       } else if (evt.eventType === EventType.CROSS) {
-        // const { x1, y1, x2, y2 } = evt.line;
-        // const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
-        // tree.delete(line);
-        console.log(evt.line);
-        tree.delete(evt.line);
-        console.log("cross happens");
+        const point = new Line(Math.floor(evt.intX), evt.intY);
+        const tempTree = tree._insert(point, tree.current);
+
+        console.log(tree.currVersionNum, i)
+        console.log(tempTree);
+
+        const tempNode1 = tree.getSuccessor(point, tempTree);
+        const node1 = tree._search(tempNode1.element, tree.current).node;
+
+        const tempNode2 = tree.getPredecessor(point, tempTree);
+        const node2 = tree._search(tempNode2.element, tree.current).node;
+
+        console.log(tempNode1, tempNode2);
+        console.log(node1, node2);
+
+        console.log(copySubtree(tree.current));
+        tree.swap(node1, node2);
+        console.log(copySubtree(tree.current));
+
+        tree.step();
+
+        continue;
       }
 
       tree.step();
@@ -168,6 +186,7 @@ const App = () => {
     }
 
     const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
+    // console.log(elem);
 
     if (elem === null || elem.element === undefined) {
       return;

@@ -75,7 +75,7 @@ function copyNode(node) {
   return newNode;
 }
 
-function copySubtree(node) {
+export function copySubtree(node) {
   if (node === null) {
     return null;
   }
@@ -162,20 +162,42 @@ export class PersistentAVLTree {
     return null;
   }
 
+  getPredecessor(element, tree) {
+    const { node, path } = this._search(element, tree);
+    // console.log(node, path);
+    if (node === null || node === undefined) {
+      return null;
+    }
+    if (node.left) {
+      return this.getMax(node.left);
+    } else {
+      for (let i = path.length - 2; i >= 0; i--) {
+        if (path[i].right === path[i + 1]) {
+          return path[i];
+        }
+      }
+    }
+    return null;
+  }
+
   shootVerticalRay(version, element) {
     element = new Line(version, element);
     // console.log("element:", element);
     const versionTree = this.getVersion(version);
     if (versionTree === null) {
-      // console.log("INVALID VERSION");
       return null;
     }
-    console.log(versionTree);
     const tempTree = this._insert(element, versionTree);
     // console.log(versionTree, element, tempTree);
     const successor = this.getSuccessor(element, tempTree);
     // console.log("SUCCESSOR: ", successor);
     return successor !== null ? successor : true;
+  }
+
+  swap(node1, node2) {
+    const tmp = node1.element;
+    node1.element = node2.element;
+    node2.element = tmp;
   }
 }
 
