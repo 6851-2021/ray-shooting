@@ -88,26 +88,16 @@ const App = () => {
       } else if (evt.eventType === EventType.CROSS) {
         const point = new Line(Math.floor(evt.intX), evt.intY);
         const tempTree = tree._insert(point, tree.current);
-
-        console.log(tree.currVersionNum, i)
-        console.log(tempTree);
+        const tmp = copySubtree(tree.current);
 
         const tempNode1 = tree.getSuccessor(point, tempTree);
-        const node1 = tree._search(tempNode1.element, tree.current).node;
+        const node1 = tree._search(tempNode1.element, tmp).node;
 
         const tempNode2 = tree.getPredecessor(point, tempTree);
-        const node2 = tree._search(tempNode2.element, tree.current).node;
+        const node2 = tree._search(tempNode2.element, tmp).node;
 
-        console.log(tempNode1, tempNode2);
-        console.log(node1, node2);
-
-        console.log(copySubtree(tree.current));
         tree.swap(node1, node2);
-        console.log(copySubtree(tree.current));
-
-        tree.step();
-
-        continue;
+        tree.current = tmp;
       }
 
       tree.step();
