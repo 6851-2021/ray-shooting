@@ -45,126 +45,122 @@ const App = () => {
     });
 
     for (let i = 0; i < window.innerWidth; i += dx) {
-      if (queue.peek() === undefined || queue.peek().val > i) {
-        tree.step();
-        continue;
-      }
+      while (queue.peek() !== undefined && queue.peek().val <= i) {
+        const evt = queue.extractMin();
+        console.log(evt);
 
-      const evt = queue.extractMin();
-      console.log(evt);
+        if (evt.eventType === EventType.START) {
+          let line, tempTree, x1, y1, x2, y2;
 
-      if (evt.eventType === EventType.START) {
-        let line, tempTree, x1, y1, x2, y2;
+          if (evt.shouldInsert) {
+            x1 = evt.line.x1;
+            y1 = window.innerHeight - evt.line.y1;
+            x2 = evt.line.x2;
+            y2 = window.innerHeight - evt.line.y2;
 
-        if (evt.shouldInsert) {
-          x1 = evt.line.x1;
-          y1 = window.innerHeight - evt.line.y1;
-          x2 = evt.line.x2;
-          y2 = window.innerHeight - evt.line.y2;
+            line = new Line(x1, y1, x2, y2);
+            tempTree = tree.insert(line);
+          } else {
+            x1 = evt.line.startX;
+            y1 = evt.line.startY;
+            x2 = evt.line.endX;
+            y2 = evt.line.endY;
 
-          line = new Line(x1, y1, x2, y2);
-          tempTree = tree.insert(line);
-        } else {
-          x1 = evt.line.startX;
-          y1 = evt.line.startY;
-          x2 = evt.line.endX;
-          y2 = evt.line.endY;
-
-          line = evt.line;
-          tempTree = tree.current;
-        }
-
-        // Take care of crossing segments that follow this event
-        const successor = tree.getSuccessor(line, tempTree);
-        const predecessor = tree.getPredecessor(line, tempTree);
-
-        const processIntersection = (cmp) => {
-          const x3 = cmp.element.startX;
-          const y3 = cmp.element.startY;
-          const x4 = cmp.element.endX;
-          const y4 = cmp.element.endY;
-
-          // Checks if q is on line segment pr
-          const onSegment = (p, q, r) =>
-            q.x <= Math.max(p.x, r.x) &&
-            q.x >= Math.min(p.x, r.x) &&
-            q.y <= Math.max(p.y, r.y) &&
-            q.y >= Math.min(p.y, r.y);
-
-          const intersectionX =
-            ((x1 * y2 - y1 * x2) * (x3 - x4) -
-              (x1 - x2) * (x3 * y4 - y3 * x4)) /
-            ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
-          const intersectionY =
-            ((x1 * y2 - y1 * x2) * (y3 - y4) -
-              (y1 - y2) * (x3 * y4 - y3 * x4)) /
-            ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
-
-          if (
-            !intersections.has(intersectionX.toString() + "," + intersectionY.toString()) &&
-            intersectionX > i &&
-            onSegment(
-              { x: x1, y: y1 },
-              { x: intersectionX, y: intersectionY },
-              { x: x2, y: y2 }
-            ) &&
-            onSegment(
-              { x: x3, y: y3 },
-              { x: intersectionX, y: intersectionY },
-              { x: x4, y: y4 }
-            )
-          ) {
-            intersections.add(intersectionX.toString() + "," + intersectionY.toString())
-            queue.insert({
-              eventType: EventType.CROSS,
-              line1: line,
-              line2: cmp.element,
-              intX: intersectionX,
-              intY: intersectionY,
-              val: intersectionX - 1,
-            });
+            line = evt.line;
+            tempTree = tree.current;
           }
-        };
 
-        if (successor !== null) processIntersection(successor);
-        if (predecessor !== null) processIntersection(predecessor);
-      } else if (evt.eventType === EventType.END) {
-        console.log(tree.currVersionNum);
-        const { x1, y1, x2, y2 } = evt.line;
-        const line = new Line(
-          x1,
-          window.innerHeight - y1,
-          x2,
-          window.innerHeight - y2
-        );
-        tree.delete(line);
-      } else if (evt.eventType === EventType.CROSS) {
-        const tmp = copySubtree(tree.current);
-        const node1 = tree._search(evt.line1, tmp).node;
-        const node2 = tree._search(evt.line2, tmp).node;
+          // Take care of crossing segments that follow this event
+          const successor = tree.getSuccessor(line, tempTree);
+          const predecessor = tree.getPredecessor(line, tempTree);
 
-        if (node1 === null || node2 === null) {
-          // TODO: Show error message
-          tree.step();
-          continue;
+          const processIntersection = (cmp) => {
+            const x3 = cmp.element.startX;
+            const y3 = cmp.element.startY;
+            const x4 = cmp.element.endX;
+            const y4 = cmp.element.endY;
+
+            // Checks if q is on line segment pr
+            const onSegment = (p, q, r) =>
+              q.x <= Math.max(p.x, r.x) &&
+              q.x >= Math.min(p.x, r.x) &&
+              q.y <= Math.max(p.y, r.y) &&
+              q.y >= Math.min(p.y, r.y);
+
+            const intersectionX =
+              ((x1 * y2 - y1 * x2) * (x3 - x4) -
+                (x1 - x2) * (x3 * y4 - y3 * x4)) /
+              ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+            const intersectionY =
+              ((x1 * y2 - y1 * x2) * (y3 - y4) -
+                (y1 - y2) * (x3 * y4 - y3 * x4)) /
+              ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+            if (
+              !intersections.has(intersectionX.toString() + "," + intersectionY.toString()) &&
+              // intersectionX > i &&
+              onSegment(
+                { x: x1, y: y1 },
+                { x: intersectionX, y: intersectionY },
+                { x: x2, y: y2 }
+              ) &&
+              onSegment(
+                { x: x3, y: y3 },
+                { x: intersectionX, y: intersectionY },
+                { x: x4, y: y4 }
+              )
+            ) {
+              intersections.add(intersectionX.toString() + "," + intersectionY.toString())
+              queue.insert({
+                eventType: EventType.CROSS,
+                line1: line,
+                line2: cmp.element,
+                intX: intersectionX,
+                intY: intersectionY,
+                val: intersectionX - 1,
+              });
+            }
+          };
+
+          if (successor !== null) processIntersection(successor);
+          if (predecessor !== null) processIntersection(predecessor);
+        } else if (evt.eventType === EventType.END) {
+          const { x1, y1, x2, y2 } = evt.line;
+          const line = new Line(
+            x1,
+            window.innerHeight - y1,
+            x2,
+            window.innerHeight - y2
+          );
+          tree.delete(line);
+        } else if (evt.eventType === EventType.CROSS) {
+          const tmp = copySubtree(tree.current);
+          const node1 = tree._search(evt.line1, tmp).node;
+          const node2 = tree._search(evt.line2, tmp).node;
+
+          if (node1 === null || node2 === null) {
+            // TODO: Show error message
+            tree.step();
+            continue;
+          }
+
+          tree.swap(node1, node2);
+          tree.current = tmp;
+
+          queue.insert({
+            eventType: EventType.START,
+            line: node1.element,
+            val: Math.ceil(evt.intX),
+            shouldInsert: false,
+          });
+
+          queue.insert({
+            eventType: EventType.START,
+            line: node2.element,
+            val: Math.ceil(evt.intX),
+            shouldInsert: false,
+          });
         }
-
-        tree.swap(node1, node2);
-        tree.current = tmp;
-
-        queue.insert({
-          eventType: EventType.START,
-          line: node1.element,
-          val: Math.ceil(evt.intX),
-          shouldInsert: false,
-        });
-
-        queue.insert({
-          eventType: EventType.START,
-          line: node2.element,
-          val: Math.ceil(evt.intX),
-          shouldInsert: false,
-        });
       }
 
       tree.step();
@@ -311,7 +307,13 @@ const App = () => {
             //   { x1: 301, y1: 100, x2: 302, y2: 150 },
 
             // ];
-            const lines = [{"x1":598,"y1":308,"x2":825,"y2":179},{"x1":539,"y1":202,"x2":794,"y2":322},{"x1":443,"y1":351,"x2":804,"y2":339},{"x1":664,"y1":337,"x2":873,"y2":242},{"x1":541,"y1":213,"x2":584,"y2":434},{"x1":388,"y1":418,"x2":634,"y2":188}];
+            const lines = [
+              {"x1":598,"y1":308,"x2":825,"y2":179},
+              {"x1":539,"y1":202,"x2":794,"y2":322},
+              {"x1":541,"y1":213,"x2":584,"y2":434},
+              {"x1":504,"y1":381,"x2":654,"y2":206},
+              {"x1":517,"y1":309,"x2":786,"y2":313},
+            ];
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
