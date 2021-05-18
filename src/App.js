@@ -269,6 +269,7 @@ const App = () => {
     );
 
     if (elem === null || elem.element === undefined) {
+      document.body.style.cursor = "default";
       return;
     }
 
