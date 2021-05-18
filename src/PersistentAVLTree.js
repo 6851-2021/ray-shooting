@@ -18,12 +18,14 @@ export class Line {
   startY;
   endX;
   endY;
+  action;
 
-  constructor(startX, startY, endX, endY) {
+  constructor(startX, startY, endX, endY, action) {
     this.startX = startX;
     this.startY = startY;
     this.endX = endX;
     this.endY = endY;
+    this.action = action;
   }
 }
 

@@ -58,7 +58,7 @@ const App = () => {
             x2 = evt.line.x2;
             y2 = window.innerHeight - evt.line.y2;
 
-            line = new Line(x1, y1, x2, y2);
+            line = new Line(x1, y1, x2, y2, evt.line.action);
             tempTree = tree.insert(line);
           } else {
             x1 = evt.line.startX;
@@ -194,6 +194,16 @@ const App = () => {
     return elem;
   };
 
+  const createTextElement = (x, y, text) => {
+    const elem = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    elem.setAttribute("x", x);
+    elem.setAttribute("y", y);
+    elem.setAttribute("text-anchor", "middle");
+    elem.setAttribute("dominant-baseline", "middle");
+    elem.innerHTML = text;
+    return elem;
+  }
+
   const handleClick = (e) => {
     if (e.target.tagName.toLowerCase() !== "svg") return;
 
@@ -229,6 +239,18 @@ const App = () => {
         );
       }
     } else if (mode === Mode.SHOOTING_RAY) {
+      const elem = tree.shootVerticalRay(
+        e.clientX,
+        window.innerHeight - e.clientY
+      );
+
+      if (elem === null || elem.element.action === undefined) {
+        return;
+      }
+
+      if (elem.element.action === 'alert') {
+        alert("hello");
+      }
     }
   };
 
@@ -245,10 +267,15 @@ const App = () => {
       e.clientX,
       window.innerHeight - e.clientY
     );
-    // console.log(elem);
 
     if (elem === null || elem.element === undefined) {
       return;
+    }
+
+    if (elem.element.action !== undefined) {
+      document.body.style.cursor = "pointer";
+    } else {
+      document.body.style.cursor = "default";
     }
 
     const { startX, startY, endX, endY } = elem.element;
@@ -259,7 +286,7 @@ const App = () => {
       createLineElement(
         {
           x1: e.clientX,
-          y1: e.clientY,
+          y1: e.clientY - 1,
           x2: e.clientX,
           y2: window.innerHeight - topRayY,
         },
@@ -300,20 +327,21 @@ const App = () => {
               canvasRef.current.removeChild(canvasRef.current.firstChild);
             }
 
-            // const lines = [
-            //   { x1: 100, y1: 100, x2: 300, y2: 100 },
-            //   { x1: 99, y1: 100, x2: 100, y2: 150 },
-            //   { x1: 101, y1: 150, x2: 299, y2: 150 },
-            //   { x1: 301, y1: 100, x2: 302, y2: 150 },
+            let lines = [];
 
-            // ];
-            const lines = [
-              {"x1":598,"y1":308,"x2":825,"y2":179},
-              {"x1":539,"y1":202,"x2":794,"y2":322},
-              {"x1":541,"y1":213,"x2":584,"y2":434},
-              {"x1":504,"y1":381,"x2":654,"y2":206},
-              {"x1":517,"y1":309,"x2":786,"y2":313},
-            ];
+            const createButton = (x, y, width = 200, height = 50) => {
+              lines.push(...[
+                { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: "alert" },
+                { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
+                { x1: x, y1: y + height, x2: x + width, y2: y + height },
+                { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
+              ]);
+
+              canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, "hello"));
+            }
+
+            createButton(100, 100);
+            createButton(500, 500);
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
