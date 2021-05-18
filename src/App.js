@@ -30,7 +30,8 @@ const App = () => {
       queue.insert({
         eventType: EventType.START,
         line,
-        val: line.x1
+        val: line.x1,
+        shouldInsert: true
       });
 
       queue.insert({
@@ -50,20 +51,35 @@ const App = () => {
       console.log(evt);
 
       if (evt.eventType === EventType.START) {
-        let { x1, y1, x2, y2 } = evt.line;
-        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        let line, tempTree, x1, y1, x2, y2;
 
-        const tempTree = tree.insert(line);
+        if (evt.shouldInsert) {
+          x1 = evt.line.x1;
+          y1 = window.innerHeight - evt.line.y1;
+          x2 = evt.line.x2;
+          y2 = window.innerHeight - evt.line.y2;
+
+          line = new Line(x1, y1, x2, y2);
+          tempTree = tree.insert(line);
+        } else {
+          x1 = evt.line.startX;
+          y1 = evt.line.startY;
+          x2 = evt.line.endX;
+          y2 = evt.line.endY;
+
+          line = evt.line;
+          tempTree = tree.current;
+        }
+
+        // Take care of crossing segments that follow this event
         const successor = tree.getSuccessor(line, tempTree);
+        const predecessor = tree.getPredecessor(line, tempTree);
 
-        if (successor !== null) {
-          y1 = window.innerHeight - y1;
-          y2 = window.innerHeight - y2;
-
-          const x3 = successor.element.startX;
-          const y3 = successor.element.startY;
-          const x4 = successor.element.endX;
-          const y4 = successor.element.endY;
+        const processIntersection = (cmp) => {
+          const x3 = cmp.element.startX;
+          const y3 = cmp.element.startY;
+          const x4 = cmp.element.endX;
+          const y4 = cmp.element.endY;
 
           // Checks if q is on line segment pr
           const onSegment = (p, q, r) => q.x <= Math.max(p.x, r.x) && q.x >= Math.min(p.x, r.x) && q.y <= Math.max(p.y, r.y) && q.y >= Math.min(p.y, r.y);
@@ -71,33 +87,48 @@ const App = () => {
           const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
           const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 
-          if (onSegment({x: x1, y: y1}, {x: intersectionX, y: intersectionY}, {x: x2, y: y2}) && onSegment({x: x3, y: y3}, {x: intersectionX, y: intersectionY}, {x: x4, y: y4})) {
+          if (intersectionX > i && onSegment({x: x1, y: y1}, {x: intersectionX, y: intersectionY}, {x: x2, y: y2}) && onSegment({x: x3, y: y3}, {x: intersectionX, y: intersectionY}, {x: x4, y: y4})) {
             queue.insert({
               eventType: EventType.CROSS,
-              line: line,
+              line1: line,
+              line2: cmp.element,
               intX: intersectionX,
               intY: intersectionY,
               val: intersectionX - 1
             });
           }
-        }
+        };
+
+        if (successor !== null) processIntersection(successor);
+        if (predecessor !== null) processIntersection(predecessor);
       } else if (evt.eventType === EventType.END) {
         const { x1, y1, x2, y2 } = evt.line;
         const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
         tree.delete(line);
       } else if (evt.eventType === EventType.CROSS) {
-        const point = new Line(Math.floor(evt.intX), evt.intY);
-        const tempTree = tree._insert(point, tree.current);
         const tmp = copySubtree(tree.current);
+        const res1 = tree._search(evt.line1, tmp);
+        const res2 = tree._search(evt.line2, tmp);
 
-        const tempNode1 = tree.getSuccessor(point, tempTree);
-        const node1 = tree._search(tempNode1.element, tmp).node;
-
-        const tempNode2 = tree.getPredecessor(point, tempTree);
-        const node2 = tree._search(tempNode2.element, tmp).node;
+        const node1 = res1.node;
+        const node2 = res2.node;
 
         tree.swap(node1, node2);
         tree.current = tmp;
+
+        queue.insert({
+          eventType: EventType.START,
+          line: node1.element,
+          val: Math.ceil(evt.intX),
+          shouldInsert: false
+        });
+
+        queue.insert({
+          eventType: EventType.START,
+          line: node2.element,
+          val: Math.ceil(evt.intX),
+          shouldInsert: false
+        });
       }
 
       tree.step();
