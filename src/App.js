@@ -1,11 +1,12 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Mode from "./mode";
 import "./App.scss";
-import { PersistentAVLTree, Line } from "./PersistentAVLTree";
+import { PersistentAVLTree, Line, copySubtree } from "./PersistentAVLTree";
 import EventType from "./eventType";
 
 import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
+import wrenchIcon from "./img/wrench.svg";
 import PriorityQueue from "./priorityQueue";
 
 const App = () => {
@@ -16,7 +17,7 @@ const App = () => {
 
   const canvasRef = useRef(null);
 
-  const buildTree = useCallback(() => {
+  const buildTree = (lines) => {
     if (lines.length === 0) {
       return;
     }
@@ -31,6 +32,7 @@ const App = () => {
         eventType: EventType.START,
         line,
         val: line.x1,
+        shouldInsert: true,
       });
 
       queue.insert({
@@ -50,39 +52,80 @@ const App = () => {
       console.log(evt);
 
       if (evt.eventType === EventType.START) {
-        let { x1, y1, x2, y2 } = evt.line;
-        const line = new Line(
-          x1,
-          window.innerHeight - y1,
-          x2,
-          window.innerHeight - y2
-        );
+        let line, tempTree, x1, y1, x2, y2;
 
-        const tempTree = tree.insert(line);
+        if (evt.shouldInsert) {
+          x1 = evt.line.x1;
+          y1 = window.innerHeight - evt.line.y1;
+          x2 = evt.line.x2;
+          y2 = window.innerHeight - evt.line.y2;
+
+          line = new Line(x1, y1, x2, y2);
+          tempTree = tree.insert(line);
+        } else {
+          x1 = evt.line.startX;
+          y1 = evt.line.startY;
+          x2 = evt.line.endX;
+          y2 = evt.line.endY;
+
+          line = evt.line;
+          tempTree = tree.current;
+        }
+
+        // Take care of crossing segments that follow this event
         const successor = tree.getSuccessor(line, tempTree);
+        const predecessor = tree.getPredecessor(line, tempTree);
 
-        if (successor !== null) {
-          y1 = window.innerHeight - y1;
-          y2 = window.innerHeight - y2;
+        const processIntersection = (cmp) => {
+          const x3 = cmp.element.startX;
+          const y3 = cmp.element.startY;
+          const x4 = cmp.element.endX;
+          const y4 = cmp.element.endY;
 
-          const x3 = successor.element.startX;
-          const y3 = successor.element.startY;
-          const x4 = successor.element.endX;
-          const y4 = successor.element.endY;
+          // Checks if q is on line segment pr
+          const onSegment = (p, q, r) =>
+            q.x <= Math.max(p.x, r.x) &&
+            q.x >= Math.min(p.x, r.x) &&
+            q.y <= Math.max(p.y, r.y) &&
+            q.y >= Math.min(p.y, r.y);
 
           const intersectionX =
             ((x1 * y2 - y1 * x2) * (x3 - x4) -
               (x1 - x2) * (x3 * y4 - y3 * x4)) /
             ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
-          // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          const intersectionY =
+            ((x1 * y2 - y1 * x2) * (y3 - y4) -
+              (y1 - y2) * (x3 * y4 - y3 * x4)) /
+            ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 
-          queue.insert({
-            eventType: EventType.CROSS,
-            line: successor,
-            val: Math.ceil(intersectionX),
-          });
-        }
+          if (
+            intersectionX > i &&
+            onSegment(
+              { x: x1, y: y1 },
+              { x: intersectionX, y: intersectionY },
+              { x: x2, y: y2 }
+            ) &&
+            onSegment(
+              { x: x3, y: y3 },
+              { x: intersectionX, y: intersectionY },
+              { x: x4, y: y4 }
+            )
+          ) {
+            queue.insert({
+              eventType: EventType.CROSS,
+              line1: line,
+              line2: cmp.element,
+              intX: intersectionX,
+              intY: intersectionY,
+              val: intersectionX - 1,
+            });
+          }
+        };
+
+        if (successor !== null) processIntersection(successor);
+        if (predecessor !== null) processIntersection(predecessor);
       } else if (evt.eventType === EventType.END) {
+        console.log(tree.currVersionNum);
         const { x1, y1, x2, y2 } = evt.line;
         const line = new Line(
           x1,
@@ -92,14 +135,39 @@ const App = () => {
         );
         tree.delete(line);
       } else if (evt.eventType === EventType.CROSS) {
-        console.log("cross happens");
+        const tmp = copySubtree(tree.current);
+        const node1 = tree._search(evt.line1, tmp).node;
+        const node2 = tree._search(evt.line2, tmp).node;
+
+        if (node1 === null || node2 === null) {
+          // TODO: Show error message
+          tree.step();
+          continue;
+        }
+
+        tree.swap(node1, node2);
+        tree.current = tmp;
+
+        queue.insert({
+          eventType: EventType.START,
+          line: node1.element,
+          val: Math.ceil(evt.intX),
+          shouldInsert: false,
+        });
+
+        queue.insert({
+          eventType: EventType.START,
+          line: node2.element,
+          val: Math.ceil(evt.intX),
+          shouldInsert: false,
+        });
       }
 
       tree.step();
     }
 
     return tree;
-  }, [lines]);
+  };
 
   const createLineElement = (line, id = null) => {
     const elem = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -161,15 +229,11 @@ const App = () => {
         );
       }
     } else if (mode === Mode.SHOOTING_RAY) {
-      console.log(
-        "btuhh"
-        // tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY)
-      );
     }
   };
 
   const handleMouseMove = (e) => {
-    if (mode !== Mode.SHOOTING_RAY) {
+    if (mode !== Mode.SHOOTING_RAY || tree === undefined) {
       return;
     }
 
@@ -181,6 +245,7 @@ const App = () => {
       e.clientX,
       window.innerHeight - e.clientY
     );
+    // console.log(elem);
 
     if (elem === null || elem.element === undefined) {
       return;
@@ -222,12 +287,58 @@ const App = () => {
               return;
             }
 
-            setTree(buildTree());
+            setTree(buildTree(lines));
             setMode(Mode.SHOOTING_RAY);
           }}
         >
           <img src={rayIcon} alt="Shoot vertical ray" />
           <p>Shoot vertical ray</p>
+        </button>
+        <button
+          onClick={() => {
+            while (canvasRef.current.firstChild) {
+              canvasRef.current.removeChild(canvasRef.current.firstChild);
+            }
+
+            // const lines = [
+            //   { x1: 100, y1: 100, x2: 300, y2: 100 },
+            //   { x1: 99, y1: 100, x2: 100, y2: 150 },
+            //   { x1: 101, y1: 150, x2: 299, y2: 150 },
+            //   { x1: 301, y1: 100, x2: 302, y2: 150 },
+
+            // ];
+            const lines = [
+              { x1: 256, y1: 542, x2: 520, y2: 541 },
+              { x1: 278, y1: 204, x2: 594, y2: 154 },
+              { x1: 299, y1: 305, x2: 500, y2: 303 },
+              // { x1: 396, y1: 583, x2: 916, y2: 550 },
+              // { x1: 415, y1: 224, x2: 708, y2: 154 },
+              { x1: 381, y1: 353, x2: 740, y2: 504 },
+              { x1: 411, y1: 237, x2: 633, y2: 263 },
+              { x1: 420, y1: 131, x2: 709, y2: 127 },
+              { x1: 458, y1: 292, x2: 817, y2: 340 },
+              { x1: 487, y1: 341, x2: 767, y2: 363 },
+              { x1: 521, y1: 203, x2: 1036, y2: 253 },
+              { x1: 526, y1: 394, x2: 687, y2: 374 },
+            ];
+
+            lines.forEach((line) => {
+              canvasRef.current.appendChild(createLineElement(line));
+              canvasRef.current.appendChild(
+                createCircleElement(line.x1, line.y1)
+              );
+              canvasRef.current.appendChild(
+                createCircleElement(line.x2, line.y2)
+              );
+            });
+
+            setLines(lines);
+            setTree(buildTree(lines));
+            setMode(Mode.SHOOTING_RAY);
+          }}
+        >
+          <img src={wrenchIcon} alt="Create user interface" />
+          <p>Create user interface</p>
         </button>
       </div>
       <svg
