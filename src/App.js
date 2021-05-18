@@ -17,6 +17,7 @@ const App = () => {
   const [tree, setTree] = useState(new PersistentAVLTree());
 
   const canvasRef = useRef(null);
+  const intersections = new Set();
 
   const buildTree = (lines) => {
     if (lines.length === 0) {
@@ -100,6 +101,7 @@ const App = () => {
             ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 
           if (
+            !intersections.has(intersectionX.toString() + "," + intersectionY.toString()) &&
             intersectionX > i &&
             onSegment(
               { x: x1, y: y1 },
@@ -112,6 +114,7 @@ const App = () => {
               { x: x4, y: y4 }
             )
           ) {
+            intersections.add(intersectionX.toString() + "," + intersectionY.toString())
             queue.insert({
               eventType: EventType.CROSS,
               line1: line,
@@ -308,20 +311,7 @@ const App = () => {
             //   { x1: 301, y1: 100, x2: 302, y2: 150 },
 
             // ];
-            const lines = [
-              { x1: 256, y1: 542, x2: 520, y2: 541 },
-              { x1: 278, y1: 204, x2: 594, y2: 154 },
-              { x1: 299, y1: 305, x2: 500, y2: 303 },
-              // { x1: 396, y1: 583, x2: 916, y2: 550 },
-              // { x1: 415, y1: 224, x2: 708, y2: 154 },
-              { x1: 381, y1: 353, x2: 740, y2: 504 },
-              { x1: 411, y1: 237, x2: 633, y2: 263 },
-              { x1: 420, y1: 131, x2: 709, y2: 127 },
-              { x1: 458, y1: 292, x2: 817, y2: 340 },
-              { x1: 487, y1: 341, x2: 767, y2: 363 },
-              { x1: 521, y1: 203, x2: 1036, y2: 253 },
-              { x1: 526, y1: 394, x2: 687, y2: 374 },
-            ];
+            const lines = [{"x1":598,"y1":308,"x2":825,"y2":179},{"x1":539,"y1":202,"x2":794,"y2":322},{"x1":443,"y1":351,"x2":804,"y2":339},{"x1":664,"y1":337,"x2":873,"y2":242},{"x1":541,"y1":213,"x2":584,"y2":434},{"x1":388,"y1":418,"x2":634,"y2":188}];
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
