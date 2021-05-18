@@ -4,6 +4,7 @@ import "./App.scss";
 import { PersistentAVLTree, Line, copySubtree } from "./PersistentAVLTree";
 import EventType from "./eventType";
 
+import clipboardIcon from "./img/clipboard.svg";
 import plusIcon from "./img/plus.svg";
 import rayIcon from "./img/ray.svg";
 import wrenchIcon from "./img/wrench.svg";
@@ -339,6 +340,19 @@ const App = () => {
         >
           <img src={wrenchIcon} alt="Create user interface" />
           <p>Create user interface</p>
+        </button>
+        <button
+          onClick={() => {
+            var textarea = document.createElement("textarea");
+            document.body.appendChild(textarea);
+            textarea.value = JSON.stringify(lines);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+          }}
+        >
+          <img src={clipboardIcon} alt="Copy lines to clipboard" />
+          <p>Copy lines to clipboard</p>
         </button>
       </div>
       <svg
