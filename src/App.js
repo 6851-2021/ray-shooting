@@ -30,18 +30,18 @@ const App = () => {
       queue.insert({
         eventType: EventType.START,
         line,
-        val: line.x1
+        val: line.x1,
       });
 
       queue.insert({
         eventType: EventType.END,
         line,
-        val: line.x2
+        val: line.x2,
       });
     });
 
     for (let i = 0; i < window.innerWidth; i += dx) {
-      if (queue.peek() === undefined || queue.peek().val !== i) {
+      if (queue.peek() === undefined || queue.peek().val > i) {
         tree.step();
         continue;
       }
@@ -51,7 +51,12 @@ const App = () => {
 
       if (evt.eventType === EventType.START) {
         let { x1, y1, x2, y2 } = evt.line;
-        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        const line = new Line(
+          x1,
+          window.innerHeight - y1,
+          x2,
+          window.innerHeight - y2
+        );
 
         const tempTree = tree.insert(line);
         const successor = tree.getSuccessor(line, tempTree);
@@ -65,18 +70,26 @@ const App = () => {
           const x4 = successor.element.endX;
           const y4 = successor.element.endY;
 
-          const intersectionX = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+          const intersectionX =
+            ((x1 * y2 - y1 * x2) * (x3 - x4) -
+              (x1 - x2) * (x3 * y4 - y3 * x4)) /
+            ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
           // const intersectionY = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
 
           queue.insert({
             eventType: EventType.CROSS,
             line: successor,
-            val: Math.ceil(intersectionX)
+            val: Math.ceil(intersectionX),
           });
         }
       } else if (evt.eventType === EventType.END) {
         const { x1, y1, x2, y2 } = evt.line;
-        const line = new Line(x1, window.innerHeight - y1, x2, window.innerHeight - y2);
+        const line = new Line(
+          x1,
+          window.innerHeight - y1,
+          x2,
+          window.innerHeight - y2
+        );
         tree.delete(line);
       } else if (evt.eventType === EventType.CROSS) {
         console.log("cross happens");
@@ -103,7 +116,10 @@ const App = () => {
   };
 
   const createCircleElement = (x, y, r = 4) => {
-    const elem = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    const elem = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle"
+    );
     elem.setAttribute("cx", x);
     elem.setAttribute("cy", y);
     elem.setAttribute("r", r);
@@ -120,7 +136,9 @@ const App = () => {
           y: e.clientY,
         });
 
-        canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
+        canvasRef.current.appendChild(
+          createCircleElement(e.clientX, e.clientY)
+        );
       } else {
         setFirstPoint(null);
 
@@ -138,7 +156,9 @@ const App = () => {
         setLines(lines.concat(line));
 
         canvasRef.current.appendChild(createLineElement(line));
-        canvasRef.current.appendChild(createCircleElement(e.clientX, e.clientY));
+        canvasRef.current.appendChild(
+          createCircleElement(e.clientX, e.clientY)
+        );
       }
     } else if (mode === Mode.SHOOTING_RAY) {
       console.log(
@@ -157,21 +177,30 @@ const App = () => {
       document.getElementById("ray").remove();
     }
 
-    const elem = tree.shootVerticalRay(e.clientX, window.innerHeight - e.clientY);
+    const elem = tree.shootVerticalRay(
+      e.clientX,
+      window.innerHeight - e.clientY
+    );
 
     if (elem === null || elem.element === undefined) {
       return;
     }
 
-    const {startX, startY, endX, endY} = elem.element;
-    const topRayY = startY + (endY - startY) / (endX - startX) * (e.clientX - startX);
+    const { startX, startY, endX, endY } = elem.element;
+    const topRayY =
+      startY + ((endY - startY) / (endX - startX)) * (e.clientX - startX);
 
-    canvasRef.current.appendChild(createLineElement({
-      x1: e.clientX,
-      y1: e.clientY,
-      x2: e.clientX,
-      y2: window.innerHeight - topRayY
-    }, "ray"));
+    canvasRef.current.appendChild(
+      createLineElement(
+        {
+          x1: e.clientX,
+          y1: e.clientY,
+          x2: e.clientX,
+          y2: window.innerHeight - topRayY,
+        },
+        "ray"
+      )
+    );
   };
 
   return (
@@ -201,7 +230,12 @@ const App = () => {
           <p>Shoot vertical ray</p>
         </button>
       </div>
-      <svg ref={canvasRef} width={window.innerWidth} height={window.innerHeight} onMouseMove={handleMouseMove} />
+      <svg
+        ref={canvasRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        onMouseMove={handleMouseMove}
+      />
     </div>
   );
 };
