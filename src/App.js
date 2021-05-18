@@ -169,12 +169,13 @@ const App = () => {
     return tree;
   };
 
-  const createLineElement = (line, id = null) => {
+  const createLineElement = (line, id = null, color = "red") => {
     const elem = document.createElementNS("http://www.w3.org/2000/svg", "line");
     elem.setAttribute("x1", line.x1);
     elem.setAttribute("y1", line.y1);
     elem.setAttribute("x2", line.x2);
     elem.setAttribute("y2", line.y2);
+    elem.setAttribute("stroke", color);
 
     if (id !== null) {
       elem.setAttribute("id", id);
@@ -244,7 +245,7 @@ const App = () => {
         window.innerHeight - e.clientY
       );
 
-      if (elem === null || elem.element.action === undefined) {
+      if (elem === null || elem.element === undefined || elem.element.action === undefined) {
         return;
       }
 
@@ -291,7 +292,8 @@ const App = () => {
           x2: e.clientX,
           y2: window.innerHeight - topRayY,
         },
-        "ray"
+        "ray",
+        "limegreen"
       )
     );
   };

@@ -37,21 +37,6 @@ function Node(element) {
   this.id = Math.random();
 }
 
-// function sortLeftToRight(a, b) {
-//   if (ptX < startX || ptX > endX) {
-//     throw "Point not in range of line!";
-//   }
-//   const slope = (endY - startY) / (endX - endY);
-//   const currY = startY + slope * (ptX - startX);
-//   return currY < ptY ? -1 : 1;
-
-//   if (a.startY < b.startY) {
-//     return -1;
-//   } else if (a.startY > b.startY) {
-//     return 1;
-//   }
-//   return 0;
-// }
 function isEqual(a, b) {
   if (a == null || b == null) {
     return a === b;
@@ -62,16 +47,6 @@ function isEqual(a, b) {
     a.element.endX === b.element.endX &&
     a.element.endY === b.element.endY
   );
-}
-
-function compPointToLine(ptX, ptY, line) {
-  const { startX, startY, endX, endY } = line;
-  if (ptX < startX || ptX > endX) {
-    throw "Point not in range of line!";
-  }
-  const slope = (endY - startY) / (endX - endY);
-  const currY = startY + slope * (ptX - startX);
-  return currY < ptY ? -1 : 1;
 }
 
 function updateHeight(node) {
@@ -130,8 +105,7 @@ export class PersistentAVLTree {
         this.currVersionNum > b.endX
       ) {
         console.log("OUT OF RANGE FUCK", this.currVersionNum, a, b);
-        // console.log("OUT OF RANGE FUCK");
-        throw "Point not in range of line!";
+        throw new Error("Point not in range of line!");
       }
       x = this.currVersionNum;
     }
@@ -576,40 +550,3 @@ PersistentAVLTree.prototype._triNodeRestructure = function (x, y, z, parent) {
   console.log("After Trinode: ", b);
   return b;
 };
-
-PersistentAVLTree.prototype.forEach = function (func) {
-  this._forEach(this.current, func);
-};
-
-PersistentAVLTree.prototype._forEach = function (node, func) {
-  if (node !== null) {
-    this._forEach(node.left, func);
-    func(node.element);
-    this._forEach(node.right, func);
-  }
-};
-
-PersistentAVLTree.prototype.getElementsAtDepth = function (targetDepth) {
-  var foundNodes = [];
-  this._getElementsAtDepth(targetDepth, 0, this.current, foundNodes);
-  return foundNodes;
-};
-
-PersistentAVLTree.prototype._getElementsAtDepth = function (
-  targetDepth,
-  current,
-  node,
-  foundNodes
-) {
-  if (node === null) {
-    return;
-  }
-  if (targetDepth === current) {
-    foundNodes.push(node.element);
-    return;
-  }
-  this._getElementsAtDepth(targetDepth, current + 1, node.left, foundNodes);
-  this._getElementsAtDepth(targetDepth, current + 1, node.right, foundNodes);
-};
-
-// module.exports = AvlTree;

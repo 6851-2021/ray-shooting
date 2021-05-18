@@ -94,12 +94,7 @@ $button-height: 48px;
     }
 
     line {
-      stroke: red;
       stroke-width: 2;
-
-      &.ray {
-        stroke: limegreen;
-      }
     }
   }
 }
