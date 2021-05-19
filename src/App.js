@@ -10,6 +10,8 @@ import rayIcon from "./img/ray.svg";
 import wrenchIcon from "./img/wrench.svg";
 import PriorityQueue from "./priorityQueue";
 
+const ENABLE_COPY_BUTTON = false;
+
 const App = () => {
   const [mode, setMode] = useState(Mode.CREATING_LINE_SEGMENT);
   const [firstPoint, setFirstPoint] = useState(null);
@@ -249,8 +251,8 @@ const App = () => {
         return;
       }
 
-      if (elem.element.action === 'alert') {
-        alert("hello");
+      if (elem.element.action.startsWith("alert:")) {
+        alert(elem.element.action.split(":")[1]);
       }
     }
   };
@@ -332,19 +334,23 @@ const App = () => {
 
             let lines = [];
 
-            const createButton = (x, y, width = 200, height = 50) => {
+            const createButton = (x, y, text, action, width = 200, height = 50) => {
               lines.push(...[
-                { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: "alert" },
+                { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: action },
                 { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
                 { x1: x, y1: y + height, x2: x + width, y2: y + height },
                 { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
               ]);
 
-              canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, "hello"));
+              canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, text));
             }
 
-            createButton(100, 100);
-            createButton(500, 500);
+            createButton(100, 150, "Button #1", "alert:This is button #1");
+            createButton(400, 150, "Button #2", "alert:This is button #2");
+            createButton(100, 250, "Button #3", "alert:This is button #3");
+            createButton(400, 250, "Button #4", "alert:This is button #4");
+            createButton(100, 350, "Button #5", "alert:This is button #5");
+            createButton(400, 350, "Button #6", "alert:This is button #6");
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
@@ -364,19 +370,21 @@ const App = () => {
           <img src={wrenchIcon} alt="Create user interface" />
           <p>Create user interface</p>
         </button>
-        <button
-          onClick={() => {
-            var textarea = document.createElement("textarea");
-            document.body.appendChild(textarea);
-            textarea.value = JSON.stringify(lines);
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
-          }}
-        >
-          <img src={clipboardIcon} alt="Copy lines to clipboard" />
-          <p>Copy lines to clipboard</p>
-        </button>
+        {ENABLE_COPY_BUTTON ? (
+          <button
+            onClick={() => {
+              var textarea = document.createElement("textarea");
+              document.body.appendChild(textarea);
+              textarea.value = JSON.stringify(lines);
+              textarea.select();
+              document.execCommand("copy");
+              document.body.removeChild(textarea);
+            }}
+          >
+            <img src={clipboardIcon} alt="Copy lines to clipboard" />
+            <p>Copy lines to clipboard</p>
+          </button>
+        ) : null}
       </div>
       <svg
         ref={canvasRef}
