@@ -59,21 +59,16 @@ function copyNode(node) {
   newNode.right = node.right;
   newNode.height = node.height;
   newNode.og = node;
-  //console.log("copying: ", node, newNode);
   return newNode;
 }
 
 export function copySubtree(node, path = new Set()) {
-  // console.log("about to copy: ", node, path);
   if (node == null) {
     return null;
   }
   if (path.has(node.id)) {
-    console.log("cycle detected!");
-    console.log(path);
     return null;
   }
-  //console.log("copyign subtree", node.element);
   const newNode = copyNode(node);
   newNode.left = copySubtree(node.left, new Set([...path, node.id]));
   newNode.right = copySubtree(node.right, new Set([...path, node.id]));
@@ -104,7 +99,6 @@ export class PersistentAVLTree {
         this.currVersionNum < b.startX ||
         this.currVersionNum > b.endX
       ) {
-        console.log("OUT OF RANGE FUCK", this.currVersionNum, a, b);
         throw new Error("Point not in range of line!");
       }
       x = this.currVersionNum;
@@ -118,7 +112,6 @@ export class PersistentAVLTree {
     const bCurrY =
       b.startY + ((b.endY - b.startY) / (b.endX - b.startX)) * (x - b.startX);
 
-    // console.log(x, aCurrY, bCurrY);
     if (aCurrY < bCurrY) {
       return -1;
     } else if (aCurrY > bCurrY) {
@@ -130,17 +123,14 @@ export class PersistentAVLTree {
   step() {
     this.versions.push(this.current);
     this.currVersionNum += 1;
-    // console.log(this.current);
   }
 
   getVersion(version) {
     return version < this.versions.length ? this.versions[version] : null;
   }
 
-  getSuccessor(element, tree) {
-    // console.log("GET SUCCESSOR: ", this.currVersionNum, copySubtree( element), tree);
+  getSuccessor(element, tree = this.current) {
     const { node, path } = this._search(element, tree);
-    // console.log(node, path);
     if (node === null || node === undefined) {
       return null;
     }
@@ -156,9 +146,8 @@ export class PersistentAVLTree {
     return null;
   }
 
-  getPredecessor(element, tree) {
+  getPredecessor(element, tree = this.current) {
     const { node, path } = this._search(element, tree);
-    // console.log(node, path);
     if (node === null || node === undefined) {
       return null;
     }
@@ -176,16 +165,12 @@ export class PersistentAVLTree {
 
   shootVerticalRay(version, element) {
     element = new Line(version, element);
-    // console.log("element:", element);
     const versionTree = this.getVersion(version);
     if (versionTree === null) {
       return null;
     }
-    // console.log(versionTree);
     const tempTree = this._insert(element, versionTree);
-    // console.log(versionTree, element, tempTree);
     const successor = this.getSuccessor(element, tempTree);
-    // console.log("SUCCESSOR: ", successor);
     return successor !== null ? successor : true;
   }
 
@@ -197,14 +182,11 @@ export class PersistentAVLTree {
 }
 
 // TODO: put data on the node.
-PersistentAVLTree.prototype.search = function (element) {
-  console.log("SEARCH: ", this.currVersionNum, element);
-  var { node } = this._search(element, this.current);
-  return node ? node.element : null;
+PersistentAVLTree.prototype.search = function (element, tree = this.current) {
+  return this._search(element, tree);
 };
 
 PersistentAVLTree.prototype._search = function (element, node, path = []) {
-  // console.log("_SEARCH: ", this.currVersionNum, copySubtree( element), node, path);
   if (node === null) {
     return { node, path };
   }
@@ -220,19 +202,11 @@ PersistentAVLTree.prototype._search = function (element, node, path = []) {
 };
 
 PersistentAVLTree.prototype.insert = function (element) {
-  console.log("inserting ", this.currVersionNum);
-  console.log("before", this.currVersionNum, copySubtree(this.current));
   this.current = this._insert(element, this.current);
-  console.log("after", this.currVersionNum, copySubtree(this.current));
   return this.current;
 };
 
 PersistentAVLTree.prototype._insert = function (element, node) {
-  // if (!(element instanceof Line)) {
-  //   console.log("not line:", element);
-  //   element = new Line(element);
-  // }
-  // console.log("Inserting: ", this.currVersionNum, copySubtree( element));
   if (node === null) {
     const newNode = new Node(element);
     return newNode;
@@ -241,7 +215,6 @@ PersistentAVLTree.prototype._insert = function (element, node) {
 
   // just copy here, propagate to children
   var direction = this._compare(element, node.element);
-  // console.log("comapare", element, copySubtree( node).element, direction);
   if (direction < 0) {
     node.left = this._insert(element, node.left);
   } else if (direction > 0) {
@@ -272,7 +245,6 @@ PersistentAVLTree.prototype._insert = function (element, node) {
 };
 
 PersistentAVLTree.prototype._rightRotate = function (node) {
-  // console.log("RIGHT ROTATE");
   var l = node.left;
   var lr = l.right;
   l.right = node;
@@ -283,7 +255,6 @@ PersistentAVLTree.prototype._rightRotate = function (node) {
 };
 
 PersistentAVLTree.prototype._leftRotate = function (node) {
-  // console.log("LEFT ROTATE");
   var r = node.right;
   var rl = r.left;
   r.left = node;
@@ -294,52 +265,32 @@ PersistentAVLTree.prototype._leftRotate = function (node) {
 };
 
 PersistentAVLTree.prototype.delete = function (element) {
-  console.log(
-    "deleting ",
-    this.currVersionNum,
-    element,
-    copySubtree(this.current)
-  );
-  if (this.current !== null) {
-    this.current = this._delete(element, this.current, null);
-    console.log("AFTER DELETE: ", copySubtree(this.current));
-  }
+  if (this.current === null) return;
+  this.current = this._delete(element, this.current, null);
 };
 
 PersistentAVLTree.prototype._delete = function (element, node, parent) {
-  console.log(
-    "DELETE: ",
-    this.currVersionNum,
-    element,
-    copySubtree(node),
-    copySubtree(parent)
-  );
   if (node === null) {
     return null;
   }
   const oldNode = node;
   node = copyNode(node);
-  // console.log("copyNode: ", node);
   var direction = this._compare(element, node.element);
   if (direction < 0) {
     // go left
-    console.log("delete go left");
     if (node.left && this._compare(element, node.left.element) === 0) {
       this._delete(element, node.left, node);
     } else {
       node.left = this._delete(element, node.left, node);
       updateHeight(node);
-      console.log("updated left node");
     }
   } else if (direction > 0) {
     // go right
-    console.log("delete go right");
     if (node.right && this._compare(element, node.right.element) === 0) {
       this._delete(element, node.right, node);
     } else {
       node.right = this._delete(element, node.right, node);
       updateHeight(node);
-      console.log("updated right node");
     }
   } else if (node.left !== null && node.right !== null) {
     // found our target element
@@ -355,17 +306,13 @@ PersistentAVLTree.prototype._delete = function (element, node, parent) {
     }
   } else if (node.left === null) {
     if (node.right === null) {
-      //console.log("both children empty", copySubtree(node), copySubtree( parent));
       // both children are empty
       if (parent === null) {
         return null;
       }
       if (parent.right === oldNode) {
-        //console.log("setting right to null");
         parent.right = null;
-        //console.log(parent);
       } else {
-        //console.log("setting left to null");
         parent.left = null;
       }
       updateHeight(parent);
@@ -397,7 +344,6 @@ PersistentAVLTree.prototype._delete = function (element, node, parent) {
     node.left = null;
     updateHeight(parent);
   }
-  // console.log("_balance", copySubtree(node), copySubtree( parent));
   return this._balance(node, parent); // backtrack and balance everyone
 };
 
@@ -406,13 +352,11 @@ PersistentAVLTree.prototype.deleteMax = function () {
 };
 
 PersistentAVLTree.prototype._deleteMax = function (node, parent) {
-  console.log("DELETE_MAX:");
   var max;
   if (node.right === null) {
     // max found
     max = this._delete(node.element, node, parent);
     this._balance(node, parent);
-    console.log("MAX: ", max);
     return max;
   } // not yet at max, keep going
   max = this._deleteMax(node.right, node);
@@ -435,20 +379,12 @@ PersistentAVLTree.prototype.getMax = function (node) {
 };
 
 PersistentAVLTree.prototype._balance = function (node, parent) {
-  console.log(
-    "Balance: ",
-    this.currVersionNum,
-    copySubtree(node),
-    copySubtree(parent)
-  );
   node = copySubtree(node);
-  console.log("node copy: ", node);
   updateHeight(node);
   var balance = getBalance(node);
   var newRoot, x, y, z;
   if (balance < -1) {
     node = copySubtree(node);
-    console.log("balance < -1");
     z = node;
     y = node.left;
     x = this._getTallestSubtree(y);
@@ -463,7 +399,6 @@ PersistentAVLTree.prototype._balance = function (node, parent) {
     return newRoot;
   } else if (balance > 1) {
     node = copySubtree(node);
-    console.log("balance > 1");
     z = node;
     y = node.right;
     x = this._getTallestSubtree(y);
@@ -476,11 +411,8 @@ PersistentAVLTree.prototype._balance = function (node, parent) {
     updateHeight(x);
     updateHeight(y);
     return newRoot;
-  } else {
-    console.log("no balance needed");
   }
   updateHeight(node);
-  console.log("after balance: ", node);
   return node;
 };
 
@@ -493,15 +425,6 @@ PersistentAVLTree.prototype._getTallestSubtree = function (node) {
 };
 
 PersistentAVLTree.prototype._triNodeRestructure = function (x, y, z, parent) {
-  console.log(
-    "TRINODE: ",
-    this.currVersionNum,
-    copySubtree(x),
-    copySubtree(y),
-    copySubtree(z),
-    parent,
-    this.current
-  );
   var a, b, c;
   if (z.right === y && y.left === x) {
     a = z;
@@ -537,16 +460,12 @@ PersistentAVLTree.prototype._triNodeRestructure = function (x, y, z, parent) {
     parent.right = b;
   }
   if (!isEqual(b.left, x) && !isEqual(b.left, y) && !isEqual(b.left, z)) {
-    console.log("a.right := b.left");
     a.right = b.left;
   }
-  console.log(b.right, x, y, z);
   if (!isEqual(b.right, x) && !isEqual(b.right, y) && !isEqual(b.right, z)) {
-    console.log("c.left := b.right");
     c.left = b.right;
   }
   b.left = a;
   b.right = c;
-  console.log("After Trinode: ", b);
   return b;
 };

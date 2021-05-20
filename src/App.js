@@ -10,7 +10,7 @@ import rayIcon from "./img/ray.svg";
 import wrenchIcon from "./img/wrench.svg";
 import PriorityQueue from "./priorityQueue";
 
-const ENABLE_COPY_BUTTON = true;
+const ENABLE_COPY_BUTTON = false;
 
 const App = () => {
   const [mode, setMode] = useState(Mode.CREATING_LINE_SEGMENT);
@@ -52,7 +52,7 @@ const App = () => {
         console.log(evt);
 
         if (evt.eventType === EventType.START) {
-          let line, tempTree, x1, y1, x2, y2;
+          let line, x1, y1, x2, y2;
 
           if (evt.shouldInsert) {
             x1 = evt.line.x1;
@@ -61,7 +61,7 @@ const App = () => {
             y2 = window.innerHeight - evt.line.y2;
 
             line = new Line(x1, y1, x2, y2, evt.line.action);
-            tempTree = tree.insert(line);
+            tree.insert(line);
           } else {
             x1 = evt.line.startX;
             y1 = evt.line.startY;
@@ -69,12 +69,11 @@ const App = () => {
             y2 = evt.line.endY;
 
             line = evt.line;
-            tempTree = tree.current;
           }
 
           // Take care of crossing segments that follow this event
-          const successor = tree.getSuccessor(line, tempTree);
-          const predecessor = tree.getPredecessor(line, tempTree);
+          const successor = tree.getSuccessor(line);
+          const predecessor = tree.getPredecessor(line);
 
           const processIntersection = (cmp) => {
             const x3 = cmp.element.startX;
@@ -135,8 +134,8 @@ const App = () => {
             window.innerHeight - y2
           );
 
-          const pred = tree.getPredecessor(line, tree.current);
-          const succ = tree.getSuccessor(line, tree.current);
+          const pred = tree.getPredecessor(line);
+          const succ = tree.getSuccessor(line);
 
           if (pred !== null) {
             queue.insert({
@@ -159,8 +158,8 @@ const App = () => {
           tree.delete(line);
         } else if (evt.eventType === EventType.CROSS) {
           const tmp = copySubtree(tree.current);
-          const node1 = tree._search(evt.line1, tmp).node;
-          const node2 = tree._search(evt.line2, tmp).node;
+          const node1 = tree.search(evt.line1, tmp).node;
+          const node2 = tree.search(evt.line2, tmp).node;
 
           if (node1 === null || node2 === null) {
             // TODO: Show error message
@@ -354,26 +353,25 @@ const App = () => {
               canvasRef.current.removeChild(canvasRef.current.firstChild);
             }
 
-            // let lines = [];
-            let lines = [{"x1":642,"y1":320,"x2":876,"y2":335},{"x1":794,"y1":190,"x2":1136,"y2":451},{"x1":721,"y1":533,"x2":1216,"y2":203},{"x1":618,"y1":617,"x2":1063,"y2":591}]
+            let lines = [];
 
-            // const createButton = (x, y, text, action, width = 200, height = 50) => {
-            //   lines.push(...[
-            //     { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: action },
-            //     { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
-            //     { x1: x, y1: y + height, x2: x + width, y2: y + height },
-            //     { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
-            //   ]);
+            const createButton = (x, y, text, action, width = 200, height = 50) => {
+              lines.push(...[
+                { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: action },
+                { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
+                { x1: x, y1: y + height, x2: x + width, y2: y + height },
+                { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
+              ]);
 
-            //   canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, text));
-            // }
+              canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, text));
+            }
 
-            // createButton(100, 150, "Button #1", "alert:This is button #1");
-            // createButton(400, 150, "Button #2", "alert:This is button #2");
-            // createButton(100, 250, "Button #3", "alert:This is button #3");
-            // createButton(400, 250, "Button #4", "alert:This is button #4");
-            // createButton(100, 350, "Button #5", "alert:This is button #5");
-            // createButton(400, 350, "Button #6", "alert:This is button #6");
+            createButton(100, 150, "Button #1", "alert:This is button #1");
+            createButton(400, 150, "Button #2", "alert:This is button #2");
+            createButton(100, 250, "Button #3", "alert:This is button #3");
+            createButton(400, 250, "Button #4", "alert:This is button #4");
+            createButton(100, 350, "Button #5", "alert:This is button #5");
+            createButton(400, 350, "Button #6", "alert:This is button #6");
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
