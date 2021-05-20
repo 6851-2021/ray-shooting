@@ -10,7 +10,7 @@ import rayIcon from "./img/ray.svg";
 import wrenchIcon from "./img/wrench.svg";
 import PriorityQueue from "./priorityQueue";
 
-const ENABLE_COPY_BUTTON = false;
+const ENABLE_COPY_BUTTON = true;
 
 const App = () => {
   const [mode, setMode] = useState(Mode.CREATING_LINE_SEGMENT);
@@ -134,6 +134,28 @@ const App = () => {
             x2,
             window.innerHeight - y2
           );
+
+          const pred = tree.getPredecessor(line, tree.current);
+          const succ = tree.getSuccessor(line, tree.current);
+
+          if (pred !== null) {
+            queue.insert({
+              eventType: EventType.START,
+              line: pred.element,
+              val: evt.val,
+              shouldInsert: false
+            });
+          }
+
+          if (succ !== null) {
+            queue.insert({
+              eventType: EventType.START,
+              line: succ.element,
+              val: evt.val,
+              shouldInsert: false
+            });
+          }
+
           tree.delete(line);
         } else if (evt.eventType === EventType.CROSS) {
           const tmp = copySubtree(tree.current);
@@ -332,25 +354,26 @@ const App = () => {
               canvasRef.current.removeChild(canvasRef.current.firstChild);
             }
 
-            let lines = [];
+            // let lines = [];
+            let lines = [{"x1":642,"y1":320,"x2":876,"y2":335},{"x1":794,"y1":190,"x2":1136,"y2":451},{"x1":721,"y1":533,"x2":1216,"y2":203},{"x1":618,"y1":617,"x2":1063,"y2":591}]
 
-            const createButton = (x, y, text, action, width = 200, height = 50) => {
-              lines.push(...[
-                { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: action },
-                { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
-                { x1: x, y1: y + height, x2: x + width, y2: y + height },
-                { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
-              ]);
+            // const createButton = (x, y, text, action, width = 200, height = 50) => {
+            //   lines.push(...[
+            //     { x1: x + 1, y1: y, x2: x + width - 1, y2: y, action: action },
+            //     { x1: x - 1.001, y1: y, x2: x - 1, y2: y + height },
+            //     { x1: x, y1: y + height, x2: x + width, y2: y + height },
+            //     { x1: x + width + 0.999, y1: y, x2: x + width + 1, y2: y + height },
+            //   ]);
 
-              canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, text));
-            }
+            //   canvasRef.current.appendChild(createTextElement(x + width / 2, y + height / 2, text));
+            // }
 
-            createButton(100, 150, "Button #1", "alert:This is button #1");
-            createButton(400, 150, "Button #2", "alert:This is button #2");
-            createButton(100, 250, "Button #3", "alert:This is button #3");
-            createButton(400, 250, "Button #4", "alert:This is button #4");
-            createButton(100, 350, "Button #5", "alert:This is button #5");
-            createButton(400, 350, "Button #6", "alert:This is button #6");
+            // createButton(100, 150, "Button #1", "alert:This is button #1");
+            // createButton(400, 150, "Button #2", "alert:This is button #2");
+            // createButton(100, 250, "Button #3", "alert:This is button #3");
+            // createButton(400, 250, "Button #4", "alert:This is button #4");
+            // createButton(100, 350, "Button #5", "alert:This is button #5");
+            // createButton(400, 350, "Button #6", "alert:This is button #6");
 
             lines.forEach((line) => {
               canvasRef.current.appendChild(createLineElement(line));
