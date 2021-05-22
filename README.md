@@ -1,14 +1,34 @@
-# Getting Started with Create React App
+# Vertical Ray Shooting Visualization
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project implements a static 2D vertical ray shooting data structure
+among a set of *n* line segments in the plane, with *O*(log *n*) query time
+and *O*((*n* + *k*) log *n*) preprocessing time and space,
+where *k* is the number of intersections between pairs of input segments.
+
+This is essentially an implementation of Sarnak and Tarjan's
+"[Planar Point Location Using Persistent Search Trees](https://doi.org/10.1145/6138.6151)",
+but with a simpler persistence scheme (simple path copying instead of
+"limited node copying") that uses a logarithmic factor more space.
+Sarnak and Tarjan show how to reduce the space bound to *O*(*n* + *k*).
+
+A React web app visualizes the input specification and query output.
+All code is written in JavaScript.
+
+## [Demo](https://6851-2021.github.io/ray-shooting/)
+
+To try out the implementation/visualization, go to the
+[demo](https://6851-2021.github.io/ray-shooting/)!
 
 ## Available Scripts
 
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
 In the project directory, you can run:
 
-### `npm run deploy`
+### `yarn deploy`
 
-Deploys the app to https://6851-2021.github.io/ray-shooting/index.html.
+Deploys the app to https://6851-2021.github.io/ray-shooting/
+via GitHub pages
 
 ### `yarn start`
 
